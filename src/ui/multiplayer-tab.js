@@ -116,7 +116,7 @@ export function renderMultiplayerAndRivalsTab() {
         </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <button class="u-btn warn" onclick="placeMultiplayerAuctionBid()">
+        <button class="u-btn warn" ${state.money < (auc.currentBid + auc.minIncrement - (auc.highestBidderId === window.mpState.playerId ? (auc.playerEscrow || 0) : 0)) ? "disabled" : ""} onclick="placeMultiplayerAuctionBid()">
           💰 ${L("Đặt Giá", "Place Bid")}<br/>(${formatCompactVND(auc.currentBid + auc.minIncrement)})
         </button>
         <button class="u-btn secondary" onclick="selectLot(${auc.lotId}, true)">
@@ -139,7 +139,7 @@ export function renderMultiplayerAndRivalsTab() {
             </div>
             <div class="u-desc">${getItemDesc(h)}</div>
           </div>
-          <button class="u-btn ${myShares >= 5 ? 'maxed' : 'purple'}" ${myShares >= 5 ? 'disabled' : ''} onclick="buyGuildMegaHubShare('${h.id}', ${h.shareCost}, ${h.dailyDividend})">
+          <button class="u-btn ${myShares >= 5 ? 'maxed' : 'purple'}" ${myShares >= 5 || state.money < h.shareCost ? 'disabled' : ''} onclick="buyGuildMegaHubShare('${h.id}', ${h.shareCost}, ${h.dailyDividend})">
             ${myShares >= 5 ? L('✅ Tối Đa 5 CP', '✅ Max 5 Shares') : `🤝 ${L("Mua 1 CP", "Buy 1 Share")}<br/>(${formatCompactVND(h.shareCost)})`}
           </button>
         </div>
@@ -180,7 +180,7 @@ export function renderMultiplayerAndRivalsTab() {
             </div>
             <div class="u-desc">${getItemDesc(c)}</div>
           </div>
-          <button class="u-btn ${signed ? 'maxed' : ''}" ${signed ? 'disabled' : ''} onclick="signB2BContract('${c.id}')">
+          <button class="u-btn ${signed ? 'maxed' : ''}" ${signed || state.money < c.signingFee || totalChargers < c.reqChargers ? 'disabled' : ''} onclick="signB2BContract('${c.id}')">
             ${signed ? L('✅ Đã Ký', '✅ Signed') : `🤝 ${L("Ký HĐ", "Sign B2B")}<br/>(${formatCompactVND(c.signingFee)})`}
           </button>
         </div>

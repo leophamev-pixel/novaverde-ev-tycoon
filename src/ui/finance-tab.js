@@ -37,7 +37,7 @@ export function renderTaxAndDebtTab() {
         </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <button class="u-btn" ${taxInfo.remaining <= 0 || state.money <= 0 ? "disabled" : ""} onclick="payTaxNowManual()">
+        <button class="u-btn" ${taxInfo.remaining <= 0 || state.money < taxInfo.remaining ? "disabled" : ""} onclick="payTaxNowManual()">
           🧾 ${L("Nộp Thuế Ngay", "Pay Tax Now")}<br/>(${formatCompactVND(taxInfo.remaining)})
         </button>
       </div>
@@ -55,7 +55,7 @@ export function renderTaxAndDebtTab() {
             ${L("Tổng nợ:", "Total Debt:")} <b>${formatVND(totalDebt)}</b> (${L("Quá 360 ngày sẽ khóa lô đất", "Station locks after 360 overdue days")}).
           </div>
         </div>
-        <button class="u-btn danger" onclick="payAllLotDebts()">
+        <button class="u-btn danger" ${state.money < totalDebt ? "disabled" : ""} onclick="payAllLotDebts()">
           💳 ${L("Tất Toán", "Pay All")}<br/>(${formatCompactVND(totalDebt)})
         </button>
       </div>

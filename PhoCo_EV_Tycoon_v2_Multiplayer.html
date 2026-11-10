@@ -4357,7 +4357,7 @@ Object.assign(globalThis, {
 function getLotMonthlyRent(lot) {
   if (!lot.owned || lot.ownershipType !== "leased") return 0;
   const discount = (state.ownedItems && state.ownedItems.item_solar_nano) ? 0.5 : 1.0;
-  return Math.round(lot.areaM2 * (lot.monthlyRentPerM2 || 400000) * discount);
+  return Math.round(lot.areaM2 * (lot.monthlyRentPerM2 || 400000) * 0.18 * discount);
 }
 
 function getLotMonthlyServiceLicenseTax(lot) {
@@ -4375,11 +4375,12 @@ function getLotMonthlyServiceLicenseTax(lot) {
 
 function getLotAnnualLandTax(lot) {
   if (!lot.owned || lot.ownershipType !== "owned") return 0;
-  const taxableValue = lot.areaM2 * (lot.officialLandPricePerM2 || 100000000);
-  const baseTax = taxableValue * 0.0003;
+  const baseArea = Math.max(60, lot.areaM2 || 90);
+  const taxableValue = Math.round((lot.buyLandCost || 80000000) * (baseArea / 90));
+  const baseTax = taxableValue * 0.03;
   const sp = getLotSpatialBreakdown(lot);
-  const unusedRatio = Math.max(0, sp.freeM2 - 15) / sp.totalAreaM2;
-  const unusedPenaltyTax = unusedRatio > 0.25 ? (taxableValue * unusedRatio * 0.002) : 0;
+  const unusedRatio = Math.max(0, sp.freeM2 - 20) / Math.max(1, sp.totalAreaM2);
+  const unusedPenaltyTax = unusedRatio > 0.40 ? (taxableValue * unusedRatio * 0.05) : 0;
   return Math.round(baseTax + unusedPenaltyTax);
 }
 
@@ -4538,28 +4539,35 @@ function payTaxNowManual() {
   const info = getRemainingAnnualTaxDue();
   if (info.remaining <= 0) {
     logEvent(L("🧾 Bạn đã nộp đủ toàn bộ Thuế Đất KD & Thuế TNDN tạm tính tới hiện tại!", "🧾 You have already prepaid all estimated Land & Corporate Taxes to date!"));
-    return;
+    return false;
   }
-  if (state.money <= 0) {
-    logEvent(L("⚠️ Ngân quỹ hiện tại là 0 G$, chưa thể tạm nộp thuế!", "⚠️ Current balance is 0 G$, cannot prepay taxes right now!"));
-    return;
+  if ((state.money || 0) < info.remaining) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để nộp thuế! Cần ${formatVND(info.remaining)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay taxes! Need ${formatVND(info.remaining)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
   }
-  const payAmount = Math.min(state.money, info.remaining);
+  const payAmount = info.remaining;
   state.money -= payAmount;
   state.yearlyPrepaidTax = (state.yearlyPrepaidTax || 0) + payAmount;
   state.totalRentAndTaxPaid += payAmount;
 
+  if (typeof playSfx === "function") playSfx("cash");
   const lot = getSelectedLot();
-  floatTexts.push({
-    x: lot.x,
-    y: lot.y - 25,
-    text: L(`🧾 Đã nộp thuế -${formatCompactVND(payAmount)}`, `🧾 Tax Paid -${formatCompactVND(payAmount)}`),
-    color: "#0284c7",
-    life: 2.0
-  });
-  logEvent(L(`🧾 Đã chủ động nộp trước ${formatVND(payAmount)} tiền Thuế Đất KD & Thuế TNDN năm ${state.year}!`, `🧾 Prepaid ${formatVND(payAmount)} toward Year ${state.year} Land & Corporate Taxes!`));
+  if (lot) {
+    floatTexts.push({
+      x: lot.x,
+      y: lot.y - 25,
+      text: L(`🧾 Đã nộp thuế -${formatCompactVND(payAmount)}`, `🧾 Tax Paid -${formatCompactVND(payAmount)}`),
+      color: "#0284c7",
+      life: 2.0
+    });
+  }
+  logEvent(L(`🧾 Đã nộp đủ ${formatVND(payAmount)} tiền Thuế Đất KD & Thuế TNDN năm ${state.year}!`, `🧾 Paid ${formatVND(payAmount)} in full for Year ${state.year} Land & Corporate Taxes!`));
   saveGameToStorage(false);
   refreshAllUI();
+  return true;
 }
 
 function advanceOneMonthBillingDemo() {
@@ -4584,41 +4592,57 @@ function advanceOneMonthBillingDemo() {
 
 function payLotDebt(lotId) {
   const lot = state.lots.find(l => l.id === lotId);
-  if (!lot) return;
+  if (!lot) return false;
   const totalDue = Math.round((lot.debtPrincipal || 0) + (lot.debtInterest || 0));
-  if (totalDue <= 0) return;
+  if (totalDue <= 0) return false;
 
-  if (state.money >= totalDue) {
-    state.money -= totalDue;
-    state.totalRentAndTaxPaid += totalDue;
-    lot.debtPrincipal = 0;
-    lot.debtInterest = 0;
-    lot.debtDaysOverdue = 0;
-    lot.lockedByDebt = false;
-    logEvent(L(`✅ Đã tất toán nợ quá hạn (${formatVND(totalDue)}) cho ${getLotDisplayName(lot)}!`, `✅ Paid off overdue debt (${formatVND(totalDue)}) for ${getLotDisplayName(lot)}!`));
-  } else if (state.money > 0) {
-    let pay = state.money;
-    state.money = 0;
-    state.totalRentAndTaxPaid += pay;
-    if (pay >= lot.debtInterest) {
-      pay -= lot.debtInterest;
-      lot.debtInterest = 0;
-      lot.debtPrincipal = Math.max(0, lot.debtPrincipal - pay);
-    } else {
-      lot.debtInterest -= pay;
-    }
-    logEvent(L(`💳 Đã trả một phần nợ cho ${getLotDisplayName(lot)}. Nợ gốc còn: ${formatVND(lot.debtPrincipal)}.`, `💳 Partially paid debt for ${getLotDisplayName(lot)}. Remaining principal: ${formatVND(lot.debtPrincipal)}.`));
-  } else {
-    logEvent(L("⚠️ Ngân quỹ không đủ! Bấm nút '➕' trên thanh tiền để nạp vốn.", "⚠️ Insufficient balance! Tap '➕' on the cash bar to add capital."));
+  if ((state.money || 0) < totalDue) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để tất toán nợ cho ${getLotDisplayName(lot)}! Cần ${formatVND(totalDue)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay off debt for ${getLotDisplayName(lot)}! Need ${formatVND(totalDue)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
   }
+
+  state.money -= totalDue;
+  state.totalRentAndTaxPaid += totalDue;
+  lot.debtPrincipal = 0;
+  lot.debtInterest = 0;
+  lot.debtDaysOverdue = 0;
+  lot.lockedByDebt = false;
+  if (typeof playSfx === "function") playSfx("cash");
+  logEvent(L(`✅ Đã tất toán 100% nợ quá hạn (${formatVND(totalDue)}) cho ${getLotDisplayName(lot)}!`, `✅ Paid off 100% of overdue debt (${formatVND(totalDue)}) for ${getLotDisplayName(lot)}!`));
   saveGameToStorage(false);
   refreshAllUI();
+  return true;
 }
 
 function payAllLotDebts() {
+  const totalDebt = getTotalPlayerDebt();
+  if (totalDebt <= 0) return false;
+  if ((state.money || 0) < totalDebt) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để tất toán toàn bộ dư nợ! Cần ${formatVND(totalDebt)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay off all overdue debts! Need ${formatVND(totalDebt)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
+  }
   state.lots.forEach(l => {
-    if (l.owned && (l.debtPrincipal > 0 || l.debtInterest > 0)) payLotDebt(l.id);
+    if (l.owned && (l.debtPrincipal > 0 || l.debtInterest > 0)) {
+      const due = Math.round((l.debtPrincipal || 0) + (l.debtInterest || 0));
+      state.money = Math.max(0, state.money - due);
+      state.totalRentAndTaxPaid += due;
+      l.debtPrincipal = 0;
+      l.debtInterest = 0;
+      l.debtDaysOverdue = 0;
+      l.lockedByDebt = false;
+    }
   });
+  if (typeof playSfx === "function") playSfx("cash");
+  logEvent(L(`✅ Đã tất toán toàn bộ dư nợ quá hạn (${formatVND(totalDebt)}) trên hệ thống!`, `✅ Paid off all overdue debts (${formatVND(totalDebt)}) across your network!`));
+  saveGameToStorage(false);
+  refreshAllUI();
+  return true;
 }
 
 /*****************************************************************************************
@@ -13240,6 +13264,7 @@ function refreshAllUI() {
     if (totalDebt > 0) {
       quickDebtBtn.style.display = "inline-block";
       quickDebtBtn.textContent = `💳 ${L("Nợ", "Debt")} ${formatCompactVND(totalDebt)}`;
+      quickDebtBtn.disabled = state.money < totalDebt;
       if (debtDot) debtDot.style.display = "block";
     } else {
       quickDebtBtn.style.display = "none";
@@ -13250,7 +13275,7 @@ function refreshAllUI() {
   // 1. Render Tab 1
   const selPanel = document.getElementById("selected-lot-panel");
   if (!lot.owned) {
-    const estRentMonth = Math.round(lot.areaM2 * lot.monthlyRentPerM2);
+    const estRentMonth = Math.round(lot.areaM2 * lot.monthlyRentPerM2 * 0.18);
     const roadNameDisp = isEn() ? (adjRoad.nameEn || adjRoad.name) : adjRoad.name;
     selPanel.innerHTML = `
       <div class="upgrade-card selected-lot" style="flex-direction:column; align-items:stretch; gap:6px;">
@@ -13409,7 +13434,7 @@ function refreshAllUI() {
               ${L("Gốc:", "Principal:")} <b>${formatCompactVND(lot.debtPrincipal)}</b> + ${L("Lãi phạt:", "Penalty:")} <b>${formatCompactVND(lot.debtInterest)}</b> (${lot.debtDaysOverdue}/360 ${L("ngày", "days")}).
             </div>
           </div>
-          <button class="u-btn danger" onclick="payLotDebt(${lot.id})">
+          <button class="u-btn danger" ${state.money < lotDebt ? "disabled" : ""} onclick="payLotDebt(${lot.id})">
             💳 ${L("Trả Nợ", "Pay Debt")}<br/>(${formatCompactVND(lotDebt)})
           </button>
         </div>
@@ -14175,7 +14200,7 @@ function renderTaxAndDebtTab() {
         </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <button class="u-btn" ${taxInfo.remaining <= 0 || state.money <= 0 ? "disabled" : ""} onclick="payTaxNowManual()">
+        <button class="u-btn" ${taxInfo.remaining <= 0 || state.money < taxInfo.remaining ? "disabled" : ""} onclick="payTaxNowManual()">
           🧾 ${L("Nộp Thuế Ngay", "Pay Tax Now")}<br/>(${formatCompactVND(taxInfo.remaining)})
         </button>
       </div>
@@ -14193,7 +14218,7 @@ function renderTaxAndDebtTab() {
             ${L("Tổng nợ:", "Total Debt:")} <b>${formatVND(totalDebt)}</b> (${L("Quá 360 ngày sẽ khóa lô đất", "Station locks after 360 overdue days")}).
           </div>
         </div>
-        <button class="u-btn danger" onclick="payAllLotDebts()">
+        <button class="u-btn danger" ${state.money < totalDebt ? "disabled" : ""} onclick="payAllLotDebts()">
           💳 ${L("Tất Toán", "Pay All")}<br/>(${formatCompactVND(totalDebt)})
         </button>
       </div>
@@ -14336,7 +14361,7 @@ function renderMultiplayerAndRivalsTab() {
         </div>
       </div>
       <div style="display:flex; flex-direction:column; gap:4px;">
-        <button class="u-btn warn" onclick="placeMultiplayerAuctionBid()">
+        <button class="u-btn warn" ${state.money < (auc.currentBid + auc.minIncrement - (auc.highestBidderId === window.mpState.playerId ? (auc.playerEscrow || 0) : 0)) ? "disabled" : ""} onclick="placeMultiplayerAuctionBid()">
           💰 ${L("Đặt Giá", "Place Bid")}<br/>(${formatCompactVND(auc.currentBid + auc.minIncrement)})
         </button>
         <button class="u-btn secondary" onclick="selectLot(${auc.lotId}, true)">
@@ -14359,7 +14384,7 @@ function renderMultiplayerAndRivalsTab() {
             </div>
             <div class="u-desc">${getItemDesc(h)}</div>
           </div>
-          <button class="u-btn ${myShares >= 5 ? 'maxed' : 'purple'}" ${myShares >= 5 ? 'disabled' : ''} onclick="buyGuildMegaHubShare('${h.id}', ${h.shareCost}, ${h.dailyDividend})">
+          <button class="u-btn ${myShares >= 5 ? 'maxed' : 'purple'}" ${myShares >= 5 || state.money < h.shareCost ? 'disabled' : ''} onclick="buyGuildMegaHubShare('${h.id}', ${h.shareCost}, ${h.dailyDividend})">
             ${myShares >= 5 ? L('✅ Tối Đa 5 CP', '✅ Max 5 Shares') : `🤝 ${L("Mua 1 CP", "Buy 1 Share")}<br/>(${formatCompactVND(h.shareCost)})`}
           </button>
         </div>
@@ -14400,7 +14425,7 @@ function renderMultiplayerAndRivalsTab() {
             </div>
             <div class="u-desc">${getItemDesc(c)}</div>
           </div>
-          <button class="u-btn ${signed ? 'maxed' : ''}" ${signed ? 'disabled' : ''} onclick="signB2BContract('${c.id}')">
+          <button class="u-btn ${signed ? 'maxed' : ''}" ${signed || state.money < c.signingFee || totalChargers < c.reqChargers ? 'disabled' : ''} onclick="signB2BContract('${c.id}')">
             ${signed ? L('✅ Đã Ký', '✅ Signed') : `🤝 ${L("Ký HĐ", "Sign B2B")}<br/>(${formatCompactVND(c.signingFee)})`}
           </button>
         </div>
@@ -14759,7 +14784,7 @@ function renderGreenCoinShopModal() {
             </div>
             <div class="u-desc">${getItemDesc(sk)}</div>
           </div>
-          <button class="u-btn ${isEquipped ? 'maxed' : (isOwned ? 'secondary' : 'warn')}" ${isEquipped ? 'disabled' : ''} onclick="buyOrEquipStationSkin('${sk.id}')">
+          <button class="u-btn ${isEquipped ? 'maxed' : (isOwned ? 'secondary' : 'warn')}" ${isEquipped || (!isOwned && (state.greenCoins || 0) < sk.gcCost) ? 'disabled' : ''} onclick="buyOrEquipStationSkin('${sk.id}')">
             ${isEquipped
               ? L("✅ Đang Dùng", "✅ Equipped")
               : (isOwned
@@ -14785,7 +14810,7 @@ function renderGreenCoinShopModal() {
             </div>
             <div class="u-desc">${getItemDesc(it)}</div>
           </div>
-          <button class="u-btn ${owned ? 'maxed' : 'purple'}" ${owned ? 'disabled' : ''} onclick="buyGreenCoinItem('${it.id}')">
+          <button class="u-btn ${owned ? 'maxed' : 'purple'}" ${owned || (state.greenCoins || 0) < it.gcCost ? 'disabled' : ''} onclick="buyGreenCoinItem('${it.id}')">
             ${owned ? L("✅ Đã Sở Hữu", "✅ Owned") : `🪙 ${L("Mua", "Buy")}<br/>(${formatGreenCoin(it.gcCost)})`}
           </button>
         </div>
@@ -14805,7 +14830,7 @@ function renderGreenCoinShopModal() {
           </div>
           <div class="u-desc">${getItemDesc(tl)}</div>
         </div>
-        <button class="u-btn warn" onclick="useGreenCoinTool('${tl.id}')">
+        <button class="u-btn warn" ${(state.greenCoins || 0) < tl.gcCost ? 'disabled' : ''} onclick="useGreenCoinTool('${tl.id}')">
           ⚡ ${L("Sử Dụng", "Use Tool")}<br/>(${formatGreenCoin(tl.gcCost)})
         </button>
       </div>
@@ -15230,7 +15255,7 @@ function renderStage2LotProgressionBox(lot) {
           <div style="font-size:10px;font-weight:900;color:#9f1239;">${evt.icon} ${Lfn("SỰ KIỆN ĐÔ THỊ KHẨN CẤP:", "URBAN DECISION EVENT:")} ${eTitle}</div>
           <div style="font-size:8.6px;color:#4c0519;margin:3px 0 6px;line-height:1.35;">${eDesc}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button class="u-btn" style="background:#059669;color:#fff;font-size:8.8px;padding:5px 6px;" onclick="resolveInteractiveUrbanEvent('A')">${lblA}</button>
+            <button class="u-btn" style="background:#059669;color:#fff;font-size:8.8px;padding:5px 6px;" ${(globalThis.state.money || 0) < (evt.optionA.costVnd || 0) ? "disabled" : ""} onclick="resolveInteractiveUrbanEvent('A')">${lblA}</button>
             <button class="u-btn secondary" style="font-size:8.8px;padding:5px 6px;" onclick="resolveInteractiveUrbanEvent('B')">${lblB}</button>
           </div>
         </div>
@@ -15268,10 +15293,10 @@ function renderStage2LotProgressionBox(lot) {
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
-        <button class="u-btn" style="font-size:8.4px;padding:5px 4px;" onclick="buyWholesaleGridKwh(300)">
+        <button class="u-btn" style="font-size:8.4px;padding:5px 4px;" ${(globalThis.state.money || 0) < buy300Cost || kwhStored >= kwhCap ? "disabled" : ""} onclick="buyWholesaleGridKwh(300)">
           ⚡ ${Lfn("Nạp +300 kWh", "Buy +300 kWh")}<br/><small>(${fmt(buy300Cost)})</small>
         </button>
-        <button class="u-btn secondary" style="font-size:8.4px;padding:5px 4px;" onclick="upgradeBessCapacity()">
+        <button class="u-btn secondary" style="font-size:8.4px;padding:5px 4px;" ${(globalThis.state.money || 0) < bessUpgCost ? "disabled" : ""} onclick="upgradeBessCapacity()">
           🔋 ${Lfn("Nâng Cấp Pin", "Upgrade BESS")}<br/><small>(${fmt(bessUpgCost)})</small>
         </button>
         <button class="u-btn ${prog.autoBuyOffPeak ? "" : "secondary"}" style="font-size:8.4px;padding:5px 4px;" onclick="toggleAutoBuyOffPeak()">
@@ -15315,7 +15340,7 @@ function renderStage2LotProgressionBox(lot) {
             <div style="font-size:8px;color:#0284c7;margin:2px 0;">+${techPct}% ${Lfn("Tốc độ sạc", "Charge Spd")}</div>
             ${
               techLvl < 3
-                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'tech')">${Lfn("Đào tạo", "Train")} (${fmt(techNextCost)})</button>`
+                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" ${(globalThis.state.money || 0) < techNextCost ? "disabled" : ""} onclick="hireOrUpgradeLotStaff(${lot.id}, 'tech')">${Lfn("Đào tạo", "Train")} (${fmt(techNextCost)})</button>`
                 : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
@@ -15325,7 +15350,7 @@ function renderStage2LotProgressionBox(lot) {
             <div style="font-size:8px;color:#7c3aed;margin:2px 0;">+${mgrPct}% ${Lfn("Lãi Tiện ích", "Amenity Rev")}</div>
             ${
               mgrLvl < 3
-                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'manager')">${Lfn("Bổ nhiệm", "Appoint")} (${fmt(mgrNextCost)})</button>`
+                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" ${(globalThis.state.money || 0) < mgrNextCost ? "disabled" : ""} onclick="hireOrUpgradeLotStaff(${lot.id}, 'manager')">${Lfn("Bổ nhiệm", "Appoint")} (${fmt(mgrNextCost)})</button>`
                 : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
@@ -15372,7 +15397,7 @@ function renderStage2UnlockTreeBox() {
             isUnl
               ? `<span style="font-size:11px;font-weight:900;color:#059669;">✅</span>`
               : parentsOk
-              ? `<button class="u-btn" style="font-size:8px;padding:4px 7px;white-space:nowrap;" onclick="researchTechNode('${node.id}')">🔬 ${Lfn("Nghiên cứu", "Research")}<br/>(${fmt(node.researchCostVnd)})</button>`
+              ? `<button class="u-btn" style="font-size:8px;padding:4px 7px;white-space:nowrap;" ${(globalThis.state.money || 0) < (node.researchCostVnd || 0) ? "disabled" : ""} onclick="researchTechNode('${node.id}')">🔬 ${Lfn("Nghiên cứu", "Research")}<br/>(${fmt(node.researchCostVnd)})</button>`
               : `<span style="font-size:8px;color:#94a3b8;font-weight:800;">${Lfn("Cần nhánh trước", "Locked")}</span>`
           }
         </div>
@@ -15725,6 +15750,10 @@ setInterval(() => {
       const aucLotObj = state.lots[auc.lotId - 1];
       const maxBotBid = aucLotObj ? Math.round(getLotMarketValuation(aucLotObj).marketBuyPrice * 1.15) : 140000000;
       if (pickBot && auc.highestBidderName !== pickBot.name && auc.currentBid < maxBotBid) {
+        if (auc.playerEscrow && auc.playerEscrow > 0) {
+          state.money += auc.playerEscrow;
+          auc.playerEscrow = 0;
+        }
         auc.currentBid += auc.minIncrement;
         auc.highestBidderId = pickBot.id;
         auc.highestBidderName = pickBot.name;
@@ -15781,14 +15810,17 @@ setInterval(() => {
 
 function placeMultiplayerAuctionBid() {
   const auc = window.mpState.activeAuction;
-  if (!auc) return;
+  if (!auc) return false;
   const nextBid = auc.currentBid + auc.minIncrement;
+  const alreadyEscrowed = auc.highestBidderId === window.mpState.playerId ? (auc.playerEscrow || 0) : 0;
+  const deltaNeeded = Math.max(0, nextBid - alreadyEscrowed);
   const aucLotName = isEn() ? (auc.lotNameEn || auc.lotName) : auc.lotName;
-  if (state.money < nextBid) {
-    logEvent(L(`⚠️ Cần ${formatVND(nextBid)} tiền mặt để đặt giá đấu thầu ${aucLotName}!`, `⚠️ Need ${formatVND(nextBid)} cash to place a bid on ${aucLotName}!`));
-    return;
+  if ((state.money || 0) < deltaNeeded) {
+    logEvent(L(`⚠️ Cần thêm ${formatVND(deltaNeeded)} tiền mặt ký quỹ để đặt mức giá ${formatVND(nextBid)} cho ${aucLotName}!`, `⚠️ Need ${formatVND(deltaNeeded)} more cash to escrow a ${formatVND(nextBid)} bid on ${aucLotName}!`));
+    return false;
   }
-  state.money -= auc.minIncrement;
+  state.money -= deltaNeeded;
+  auc.playerEscrow = nextBid;
   auc.currentBid = nextBid;
   auc.highestBidderId = window.mpState.playerId;
   auc.highestBidderName = window.mpState.playerName;

@@ -291,7 +291,7 @@ export function renderGreenCoinShopModal() {
             </div>
             <div class="u-desc">${getItemDesc(sk)}</div>
           </div>
-          <button class="u-btn ${isEquipped ? 'maxed' : (isOwned ? 'secondary' : 'warn')}" ${isEquipped ? 'disabled' : ''} onclick="buyOrEquipStationSkin('${sk.id}')">
+          <button class="u-btn ${isEquipped ? 'maxed' : (isOwned ? 'secondary' : 'warn')}" ${isEquipped || (!isOwned && (state.greenCoins || 0) < sk.gcCost) ? 'disabled' : ''} onclick="buyOrEquipStationSkin('${sk.id}')">
             ${isEquipped
               ? L("✅ Đang Dùng", "✅ Equipped")
               : (isOwned
@@ -317,7 +317,7 @@ export function renderGreenCoinShopModal() {
             </div>
             <div class="u-desc">${getItemDesc(it)}</div>
           </div>
-          <button class="u-btn ${owned ? 'maxed' : 'purple'}" ${owned ? 'disabled' : ''} onclick="buyGreenCoinItem('${it.id}')">
+          <button class="u-btn ${owned ? 'maxed' : 'purple'}" ${owned || (state.greenCoins || 0) < it.gcCost ? 'disabled' : ''} onclick="buyGreenCoinItem('${it.id}')">
             ${owned ? L("✅ Đã Sở Hữu", "✅ Owned") : `🪙 ${L("Mua", "Buy")}<br/>(${formatGreenCoin(it.gcCost)})`}
           </button>
         </div>
@@ -337,7 +337,7 @@ export function renderGreenCoinShopModal() {
           </div>
           <div class="u-desc">${getItemDesc(tl)}</div>
         </div>
-        <button class="u-btn warn" onclick="useGreenCoinTool('${tl.id}')">
+        <button class="u-btn warn" ${(state.greenCoins || 0) < tl.gcCost ? 'disabled' : ''} onclick="useGreenCoinTool('${tl.id}')">
           ⚡ ${L("Sử Dụng", "Use Tool")}<br/>(${formatGreenCoin(tl.gcCost)})
         </button>
       </div>

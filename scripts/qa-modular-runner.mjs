@@ -586,6 +586,64 @@ assertStg3(
 );
 
 assertStg3(
+  "FIN-01",
+  "Kiểm tra Thuế Đất cân bằng (~3,726 G$) & Chặn nộp thuế khi số dư nhỏ hơn số thuế (VD: Thuế 653K, TK chỉ có 13K -> Chặn 100%)",
+  (() => {
+    vm.runInContext("resetAllSaveData(); state.yearlyOperatingProfit = 4000000000; state.yearlyGrossRevenue = 4000000000; state.money = 13000000;", sandbox);
+    const landTax1 = vm.runInContext("getLotAnnualLandTax(state.lots[0])", sandbox);
+    const dueInfo = vm.runInContext("getRemainingAnnualTaxDue()", sandbox);
+    const paidWhenShort = vm.runInContext("payTaxNowManual()", sandbox);
+    const moneyAfterShort = vm.runInContext("state.money", sandbox);
+    return landTax1 < 20000000 && dueInfo.remaining > 13000000 && paidWhenShort === false && moneyAfterShort === 13000000;
+  })(),
+  "Blocked payTaxNowManual() when cash (13K G$) < tax due; balance stayed 13,000 G$"
+);
+
+assertStg3(
+  "FIN-02",
+  "Kiểm tra Nút Nộp Thuế bị khóa (disabled) khi thiếu tiền & Nộp thành công khi đủ tiền",
+  (() => {
+    vm.runInContext("renderTaxAndDebtTab();", sandbox);
+    const htmlDisabled = vm.runInContext("document.getElementById('tax-and-debt-panel').innerHTML", sandbox);
+    const dueNow = vm.runInContext("getRemainingAnnualTaxDue().remaining", sandbox);
+    vm.runInContext("state.money = " + (dueNow + 5000000) + ";", sandbox);
+    const paidOk = vm.runInContext("payTaxNowManual()", sandbox);
+    const moneyLeft = vm.runInContext("state.money", sandbox);
+    const remAfter = vm.runInContext("getRemainingAnnualTaxDue().remaining", sandbox);
+    return htmlDisabled.includes("disabled") && paidOk === true && moneyLeft === 5000000 && remAfter === 0;
+  })(),
+  "Button disabled when short; paid exact tax when sufficient"
+);
+
+assertStg3(
+  "FIN-03",
+  "Kiểm tra Trả Nợ (payLotDebt / payAllLotDebts) chặn trừ tiền lẻ khi số dư không đủ tất toán nợ",
+  (() => {
+    vm.runInContext("resetAllSaveData(); state.lots[0].debtPrincipal = 80000000; state.money = 13000000;", sandbox);
+    const ok1 = vm.runInContext("payLotDebt(1)", sandbox);
+    const okAll = vm.runInContext("payAllLotDebts()", sandbox);
+    const moneyAfter = vm.runInContext("state.money", sandbox);
+    const debtAfter = vm.runInContext("state.lots[0].debtPrincipal", sandbox);
+    return ok1 === false && okAll === false && moneyAfter === 13000000 && debtAfter === 80000000;
+  })(),
+  "Blocked partial debt drain when cash (13K G$) < debt (80K G$)"
+);
+
+assertStg3(
+  "FIN-04",
+  "Kiểm tra Đấu Giá Sổ Đỏ (placeMultiplayerAuctionBid) ký quỹ đủ 100% giá đặt & chặn khi thiếu tiền",
+  (() => {
+    vm.runInContext("resetAllSaveData(); window.mpState.activeAuction = { auctionId: 'T1', lotId: 12, lotName: 'Lot 12', currentBid: 75000000, minIncrement: 5000000, highestBidderId: 'bot', highestBidderName: 'Bot', remainingSec: 60 }; state.money = 20000000;", sandbox);
+    const failBid = vm.runInContext("placeMultiplayerAuctionBid()", sandbox);
+    vm.runInContext("state.money = 100000000;", sandbox);
+    const okBid = vm.runInContext("placeMultiplayerAuctionBid()", sandbox);
+    const moneyAfterEscrow = vm.runInContext("state.money", sandbox);
+    return failBid === false && okBid !== false && moneyAfterEscrow === 20000000;
+  })(),
+  "Escrowed full 80K G$ bid from 100K G$ -> 20K G$ remaining"
+);
+
+assertStg3(
   "STG3-10",
   "Giao diện Trung tâm Phân tích & Âm thanh (renderStage3AnalyticsAndAudioBox) hiển thị đầy đủ trên HUD",
   (() => {
@@ -606,6 +664,6 @@ for (const r of stg3Results) {
 }
 
 console.log("\n===================================================================");
-console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg3PassCount}/12 STAGE-3 & LANGPACK TESTS +  ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + stg3PassCount + qaPassedCount}/${32 + qaTotalCount} PASSED (100%)`);
+console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg3PassCount}/16 STAGE-3, LANGPACK & FINANCE TESTS +  ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + stg3PassCount + qaPassedCount}/${36 + qaTotalCount} PASSED (100%)`);
 console.log("===================================================================");
-if (modPassCount < 10 || stg2PassCount < 10 || stg3PassCount < 12 || qaPassedCount < qaTotalCount) process.exit(1);
+if (modPassCount < 10 || stg2PassCount < 10 || stg3PassCount < 16 || qaPassedCount < qaTotalCount) process.exit(1);

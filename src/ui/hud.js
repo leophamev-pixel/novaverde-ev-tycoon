@@ -198,6 +198,7 @@ export function refreshAllUI() {
     if (totalDebt > 0) {
       quickDebtBtn.style.display = "inline-block";
       quickDebtBtn.textContent = `💳 ${L("Nợ", "Debt")} ${formatCompactVND(totalDebt)}`;
+      quickDebtBtn.disabled = state.money < totalDebt;
       if (debtDot) debtDot.style.display = "block";
     } else {
       quickDebtBtn.style.display = "none";
@@ -208,7 +209,7 @@ export function refreshAllUI() {
   // 1. Render Tab 1
   const selPanel = document.getElementById("selected-lot-panel");
   if (!lot.owned) {
-    const estRentMonth = Math.round(lot.areaM2 * lot.monthlyRentPerM2);
+    const estRentMonth = Math.round(lot.areaM2 * lot.monthlyRentPerM2 * 0.18);
     const roadNameDisp = isEn() ? (adjRoad.nameEn || adjRoad.name) : adjRoad.name;
     selPanel.innerHTML = `
       <div class="upgrade-card selected-lot" style="flex-direction:column; align-items:stretch; gap:6px;">
@@ -367,7 +368,7 @@ export function refreshAllUI() {
               ${L("Gốc:", "Principal:")} <b>${formatCompactVND(lot.debtPrincipal)}</b> + ${L("Lãi phạt:", "Penalty:")} <b>${formatCompactVND(lot.debtInterest)}</b> (${lot.debtDaysOverdue}/360 ${L("ngày", "days")}).
             </div>
           </div>
-          <button class="u-btn danger" onclick="payLotDebt(${lot.id})">
+          <button class="u-btn danger" ${state.money < lotDebt ? "disabled" : ""} onclick="payLotDebt(${lot.id})">
             💳 ${L("Trả Nợ", "Pay Debt")}<br/>(${formatCompactVND(lotDebt)})
           </button>
         </div>

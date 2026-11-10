@@ -89,7 +89,7 @@ export function renderStage2LotProgressionBox(lot) {
           <div style="font-size:10px;font-weight:900;color:#9f1239;">${evt.icon} ${Lfn("SỰ KIỆN ĐÔ THỊ KHẨN CẤP:", "URBAN DECISION EVENT:")} ${eTitle}</div>
           <div style="font-size:8.6px;color:#4c0519;margin:3px 0 6px;line-height:1.35;">${eDesc}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button class="u-btn" style="background:#059669;color:#fff;font-size:8.8px;padding:5px 6px;" onclick="resolveInteractiveUrbanEvent('A')">${lblA}</button>
+            <button class="u-btn" style="background:#059669;color:#fff;font-size:8.8px;padding:5px 6px;" ${(globalThis.state.money || 0) < (evt.optionA.costVnd || 0) ? "disabled" : ""} onclick="resolveInteractiveUrbanEvent('A')">${lblA}</button>
             <button class="u-btn secondary" style="font-size:8.8px;padding:5px 6px;" onclick="resolveInteractiveUrbanEvent('B')">${lblB}</button>
           </div>
         </div>
@@ -127,10 +127,10 @@ export function renderStage2LotProgressionBox(lot) {
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
-        <button class="u-btn" style="font-size:8.4px;padding:5px 4px;" onclick="buyWholesaleGridKwh(300)">
+        <button class="u-btn" style="font-size:8.4px;padding:5px 4px;" ${(globalThis.state.money || 0) < buy300Cost || kwhStored >= kwhCap ? "disabled" : ""} onclick="buyWholesaleGridKwh(300)">
           ⚡ ${Lfn("Nạp +300 kWh", "Buy +300 kWh")}<br/><small>(${fmt(buy300Cost)})</small>
         </button>
-        <button class="u-btn secondary" style="font-size:8.4px;padding:5px 4px;" onclick="upgradeBessCapacity()">
+        <button class="u-btn secondary" style="font-size:8.4px;padding:5px 4px;" ${(globalThis.state.money || 0) < bessUpgCost ? "disabled" : ""} onclick="upgradeBessCapacity()">
           🔋 ${Lfn("Nâng Cấp Pin", "Upgrade BESS")}<br/><small>(${fmt(bessUpgCost)})</small>
         </button>
         <button class="u-btn ${prog.autoBuyOffPeak ? "" : "secondary"}" style="font-size:8.4px;padding:5px 4px;" onclick="toggleAutoBuyOffPeak()">
@@ -174,7 +174,7 @@ export function renderStage2LotProgressionBox(lot) {
             <div style="font-size:8px;color:#0284c7;margin:2px 0;">+${techPct}% ${Lfn("Tốc độ sạc", "Charge Spd")}</div>
             ${
               techLvl < 3
-                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'tech')">${Lfn("Đào tạo", "Train")} (${fmt(techNextCost)})</button>`
+                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" ${(globalThis.state.money || 0) < techNextCost ? "disabled" : ""} onclick="hireOrUpgradeLotStaff(${lot.id}, 'tech')">${Lfn("Đào tạo", "Train")} (${fmt(techNextCost)})</button>`
                 : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
@@ -184,7 +184,7 @@ export function renderStage2LotProgressionBox(lot) {
             <div style="font-size:8px;color:#7c3aed;margin:2px 0;">+${mgrPct}% ${Lfn("Lãi Tiện ích", "Amenity Rev")}</div>
             ${
               mgrLvl < 3
-                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'manager')">${Lfn("Bổ nhiệm", "Appoint")} (${fmt(mgrNextCost)})</button>`
+                ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" ${(globalThis.state.money || 0) < mgrNextCost ? "disabled" : ""} onclick="hireOrUpgradeLotStaff(${lot.id}, 'manager')">${Lfn("Bổ nhiệm", "Appoint")} (${fmt(mgrNextCost)})</button>`
                 : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
@@ -231,7 +231,7 @@ export function renderStage2UnlockTreeBox() {
             isUnl
               ? `<span style="font-size:11px;font-weight:900;color:#059669;">✅</span>`
               : parentsOk
-              ? `<button class="u-btn" style="font-size:8px;padding:4px 7px;white-space:nowrap;" onclick="researchTechNode('${node.id}')">🔬 ${Lfn("Nghiên cứu", "Research")}<br/>(${fmt(node.researchCostVnd)})</button>`
+              ? `<button class="u-btn" style="font-size:8px;padding:4px 7px;white-space:nowrap;" ${(globalThis.state.money || 0) < (node.researchCostVnd || 0) ? "disabled" : ""} onclick="researchTechNode('${node.id}')">🔬 ${Lfn("Nghiên cứu", "Research")}<br/>(${fmt(node.researchCostVnd)})</button>`
               : `<span style="font-size:8px;color:#94a3b8;font-weight:800;">${Lfn("Cần nhánh trước", "Locked")}</span>`
           }
         </div>

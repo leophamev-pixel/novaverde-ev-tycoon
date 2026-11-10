@@ -152,6 +152,10 @@ setInterval(() => {
       const aucLotObj = state.lots[auc.lotId - 1];
       const maxBotBid = aucLotObj ? Math.round(getLotMarketValuation(aucLotObj).marketBuyPrice * 1.15) : 140000000;
       if (pickBot && auc.highestBidderName !== pickBot.name && auc.currentBid < maxBotBid) {
+        if (auc.playerEscrow && auc.playerEscrow > 0) {
+          state.money += auc.playerEscrow;
+          auc.playerEscrow = 0;
+        }
         auc.currentBid += auc.minIncrement;
         auc.highestBidderId = pickBot.id;
         auc.highestBidderName = pickBot.name;
@@ -208,14 +212,17 @@ setInterval(() => {
 
 export function placeMultiplayerAuctionBid() {
   const auc = window.mpState.activeAuction;
-  if (!auc) return;
+  if (!auc) return false;
   const nextBid = auc.currentBid + auc.minIncrement;
+  const alreadyEscrowed = auc.highestBidderId === window.mpState.playerId ? (auc.playerEscrow || 0) : 0;
+  const deltaNeeded = Math.max(0, nextBid - alreadyEscrowed);
   const aucLotName = isEn() ? (auc.lotNameEn || auc.lotName) : auc.lotName;
-  if (state.money < nextBid) {
-    logEvent(L(`⚠️ Cần ${formatVND(nextBid)} tiền mặt để đặt giá đấu thầu ${aucLotName}!`, `⚠️ Need ${formatVND(nextBid)} cash to place a bid on ${aucLotName}!`));
-    return;
+  if ((state.money || 0) < deltaNeeded) {
+    logEvent(L(`⚠️ Cần thêm ${formatVND(deltaNeeded)} tiền mặt ký quỹ để đặt mức giá ${formatVND(nextBid)} cho ${aucLotName}!`, `⚠️ Need ${formatVND(deltaNeeded)} more cash to escrow a ${formatVND(nextBid)} bid on ${aucLotName}!`));
+    return false;
   }
-  state.money -= auc.minIncrement;
+  state.money -= deltaNeeded;
+  auc.playerEscrow = nextBid;
   auc.currentBid = nextBid;
   auc.highestBidderId = window.mpState.playerId;
   auc.highestBidderName = window.mpState.playerName;

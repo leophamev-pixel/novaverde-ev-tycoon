@@ -5,7 +5,7 @@
 export function getLotMonthlyRent(lot) {
   if (!lot.owned || lot.ownershipType !== "leased") return 0;
   const discount = (state.ownedItems && state.ownedItems.item_solar_nano) ? 0.5 : 1.0;
-  return Math.round(lot.areaM2 * (lot.monthlyRentPerM2 || 400000) * discount);
+  return Math.round(lot.areaM2 * (lot.monthlyRentPerM2 || 400000) * 0.18 * discount);
 }
 
 export function getLotMonthlyServiceLicenseTax(lot) {
@@ -23,11 +23,12 @@ export function getLotMonthlyServiceLicenseTax(lot) {
 
 export function getLotAnnualLandTax(lot) {
   if (!lot.owned || lot.ownershipType !== "owned") return 0;
-  const taxableValue = lot.areaM2 * (lot.officialLandPricePerM2 || 100000000);
-  const baseTax = taxableValue * 0.0003;
+  const baseArea = Math.max(60, lot.areaM2 || 90);
+  const taxableValue = Math.round((lot.buyLandCost || 80000000) * (baseArea / 90));
+  const baseTax = taxableValue * 0.03;
   const sp = getLotSpatialBreakdown(lot);
-  const unusedRatio = Math.max(0, sp.freeM2 - 15) / sp.totalAreaM2;
-  const unusedPenaltyTax = unusedRatio > 0.25 ? (taxableValue * unusedRatio * 0.002) : 0;
+  const unusedRatio = Math.max(0, sp.freeM2 - 20) / Math.max(1, sp.totalAreaM2);
+  const unusedPenaltyTax = unusedRatio > 0.40 ? (taxableValue * unusedRatio * 0.05) : 0;
   return Math.round(baseTax + unusedPenaltyTax);
 }
 
@@ -186,28 +187,35 @@ export function payTaxNowManual() {
   const info = getRemainingAnnualTaxDue();
   if (info.remaining <= 0) {
     logEvent(L("🧾 Bạn đã nộp đủ toàn bộ Thuế Đất KD & Thuế TNDN tạm tính tới hiện tại!", "🧾 You have already prepaid all estimated Land & Corporate Taxes to date!"));
-    return;
+    return false;
   }
-  if (state.money <= 0) {
-    logEvent(L("⚠️ Ngân quỹ hiện tại là 0 G$, chưa thể tạm nộp thuế!", "⚠️ Current balance is 0 G$, cannot prepay taxes right now!"));
-    return;
+  if ((state.money || 0) < info.remaining) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để nộp thuế! Cần ${formatVND(info.remaining)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay taxes! Need ${formatVND(info.remaining)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
   }
-  const payAmount = Math.min(state.money, info.remaining);
+  const payAmount = info.remaining;
   state.money -= payAmount;
   state.yearlyPrepaidTax = (state.yearlyPrepaidTax || 0) + payAmount;
   state.totalRentAndTaxPaid += payAmount;
 
+  if (typeof playSfx === "function") playSfx("cash");
   const lot = getSelectedLot();
-  floatTexts.push({
-    x: lot.x,
-    y: lot.y - 25,
-    text: L(`🧾 Đã nộp thuế -${formatCompactVND(payAmount)}`, `🧾 Tax Paid -${formatCompactVND(payAmount)}`),
-    color: "#0284c7",
-    life: 2.0
-  });
-  logEvent(L(`🧾 Đã chủ động nộp trước ${formatVND(payAmount)} tiền Thuế Đất KD & Thuế TNDN năm ${state.year}!`, `🧾 Prepaid ${formatVND(payAmount)} toward Year ${state.year} Land & Corporate Taxes!`));
+  if (lot) {
+    floatTexts.push({
+      x: lot.x,
+      y: lot.y - 25,
+      text: L(`🧾 Đã nộp thuế -${formatCompactVND(payAmount)}`, `🧾 Tax Paid -${formatCompactVND(payAmount)}`),
+      color: "#0284c7",
+      life: 2.0
+    });
+  }
+  logEvent(L(`🧾 Đã nộp đủ ${formatVND(payAmount)} tiền Thuế Đất KD & Thuế TNDN năm ${state.year}!`, `🧾 Paid ${formatVND(payAmount)} in full for Year ${state.year} Land & Corporate Taxes!`));
   saveGameToStorage(false);
   refreshAllUI();
+  return true;
 }
 
 export function advanceOneMonthBillingDemo() {
@@ -232,41 +240,57 @@ export function advanceOneMonthBillingDemo() {
 
 export function payLotDebt(lotId) {
   const lot = state.lots.find(l => l.id === lotId);
-  if (!lot) return;
+  if (!lot) return false;
   const totalDue = Math.round((lot.debtPrincipal || 0) + (lot.debtInterest || 0));
-  if (totalDue <= 0) return;
+  if (totalDue <= 0) return false;
 
-  if (state.money >= totalDue) {
-    state.money -= totalDue;
-    state.totalRentAndTaxPaid += totalDue;
-    lot.debtPrincipal = 0;
-    lot.debtInterest = 0;
-    lot.debtDaysOverdue = 0;
-    lot.lockedByDebt = false;
-    logEvent(L(`✅ Đã tất toán nợ quá hạn (${formatVND(totalDue)}) cho ${getLotDisplayName(lot)}!`, `✅ Paid off overdue debt (${formatVND(totalDue)}) for ${getLotDisplayName(lot)}!`));
-  } else if (state.money > 0) {
-    let pay = state.money;
-    state.money = 0;
-    state.totalRentAndTaxPaid += pay;
-    if (pay >= lot.debtInterest) {
-      pay -= lot.debtInterest;
-      lot.debtInterest = 0;
-      lot.debtPrincipal = Math.max(0, lot.debtPrincipal - pay);
-    } else {
-      lot.debtInterest -= pay;
-    }
-    logEvent(L(`💳 Đã trả một phần nợ cho ${getLotDisplayName(lot)}. Nợ gốc còn: ${formatVND(lot.debtPrincipal)}.`, `💳 Partially paid debt for ${getLotDisplayName(lot)}. Remaining principal: ${formatVND(lot.debtPrincipal)}.`));
-  } else {
-    logEvent(L("⚠️ Ngân quỹ không đủ! Bấm nút '➕' trên thanh tiền để nạp vốn.", "⚠️ Insufficient balance! Tap '➕' on the cash bar to add capital."));
+  if ((state.money || 0) < totalDue) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để tất toán nợ cho ${getLotDisplayName(lot)}! Cần ${formatVND(totalDue)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay off debt for ${getLotDisplayName(lot)}! Need ${formatVND(totalDue)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
   }
+
+  state.money -= totalDue;
+  state.totalRentAndTaxPaid += totalDue;
+  lot.debtPrincipal = 0;
+  lot.debtInterest = 0;
+  lot.debtDaysOverdue = 0;
+  lot.lockedByDebt = false;
+  if (typeof playSfx === "function") playSfx("cash");
+  logEvent(L(`✅ Đã tất toán 100% nợ quá hạn (${formatVND(totalDue)}) cho ${getLotDisplayName(lot)}!`, `✅ Paid off 100% of overdue debt (${formatVND(totalDue)}) for ${getLotDisplayName(lot)}!`));
   saveGameToStorage(false);
   refreshAllUI();
+  return true;
 }
 
 export function payAllLotDebts() {
+  const totalDebt = getTotalPlayerDebt();
+  if (totalDebt <= 0) return false;
+  if ((state.money || 0) < totalDebt) {
+    logEvent(L(
+      `⚠️ Không đủ ngân quỹ để tất toán toàn bộ dư nợ! Cần ${formatVND(totalDebt)} nhưng số dư hiện tại chỉ có ${formatVND(state.money)}.`,
+      `⚠️ Insufficient funds to pay off all overdue debts! Need ${formatVND(totalDebt)} but current balance is only ${formatVND(state.money)}.`
+    ));
+    return false;
+  }
   state.lots.forEach(l => {
-    if (l.owned && (l.debtPrincipal > 0 || l.debtInterest > 0)) payLotDebt(l.id);
+    if (l.owned && (l.debtPrincipal > 0 || l.debtInterest > 0)) {
+      const due = Math.round((l.debtPrincipal || 0) + (l.debtInterest || 0));
+      state.money = Math.max(0, state.money - due);
+      state.totalRentAndTaxPaid += due;
+      l.debtPrincipal = 0;
+      l.debtInterest = 0;
+      l.debtDaysOverdue = 0;
+      l.lockedByDebt = false;
+    }
   });
+  if (typeof playSfx === "function") playSfx("cash");
+  logEvent(L(`✅ Đã tất toán toàn bộ dư nợ quá hạn (${formatVND(totalDebt)}) trên hệ thống!`, `✅ Paid off all overdue debts (${formatVND(totalDebt)}) across your network!`));
+  saveGameToStorage(false);
+  refreshAllUI();
+  return true;
 }
 
 /*****************************************************************************************
