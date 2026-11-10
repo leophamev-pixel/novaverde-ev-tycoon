@@ -2,7 +2,7 @@
  * SERVICE WORKER (PWA NETWORK-FIRST & OFFLINE FALLBACK) — NOVAVERDE EV TYCOON 3D v3.1
  * Tự động bỏ qua bộ nhớ đệm khi chạy ở Localhost Dev Server để hỗ trợ Hot Reload tức thì
  */
-const CACHE_NAME = "novaverde-ev-tycoon-cache-v3.1";
+const CACHE_NAME = "novaverde-ev-tycoon-cache-v3.2-modular";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

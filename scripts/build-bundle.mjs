@@ -111,9 +111,9 @@ const bridgeRaw = stripEsModuleSyntax(
 
 const indexShell = fs.readFileSync(path.join(ROOT_DIR, "index.html"), "utf8");
 const bundledHtml = indexShell
-  .replace(`<link rel="stylesheet" href="/src/styles/main.css" />`, `<style>\n${cssText}\n</style>`)
+  .replace(/<link rel="stylesheet" href="\.?\/src\/styles\/main\.css" \/>/, `<style>\n${cssText}\n</style>`)
   .replace(
-    `<script type="module" src="/src/main.js"></script>`,
+    /<script type="module" src="\.?\/src\/main\.js"><\/script>/,
     `<script>\n${chunks.join("\n\n")}\n\n${initBlock}\n\n${bridgeRaw}\n</script>`
   );
 
