@@ -18,7 +18,10 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 execFileSync(process.execPath, [path.join(__dirname, "build-bundle.mjs")], { stdio: "inherit" });
 
 // BƯỚC 2: Kiểm thử trực tiếp các ES Modules (MOD-01 .. MOD-10)
-import { BALANCE_SUMMARY, FRANCHISE_MARGIN_PER_KWH, DIRECT_MARGIN_PER_KWH, OFFLINE_MIN_FLOOR_PER_BAY_PER_MIN } from "../src/data/balance.js";
+import { BALANCE_SUMMARY, FRANCHISE_MARGIN_PER_KWH, DIRECT_MARGIN_PER_KWH, OFFLINE_MIN_FLOOR_PER_BAY_PER_MIN, BESS_BASE_CAPACITY_KWH, BESS_DISCHARGE_MARGIN_BONUS, STAFF_TECH_SPEED_BONUS, STAFF_MANAGER_AMENITY_BONUS } from "../src/data/balance.js";
+import { UNLOCK_TREE_DAG } from "../src/data/unlock-tree.js";
+import { MAIN_QUESTS_CHAIN } from "../src/systems/quest.js";
+import { INTERACTIVE_URBAN_EVENTS } from "../src/systems/progression.js";
 import { AMENITY_CATALOG } from "../src/data/amenity-catalog.js";
 import { CHARGER_TIERS } from "../src/data/charger-tiers.js";
 import { EV_MODELS, ICE_CAR_MODELS, SCOOTER_MODELS } from "../src/data/vehicle-models.js";
@@ -279,7 +282,152 @@ const vmResults = vm.runInContext("results", sandbox) || [];
 const qaPassedCount = vmResults.filter(r => r.status === "PASS").length;
 const qaTotalCount = vmResults.length;
 
+
+// BƯỚC 4: KIỂM THỬ GIAI ĐOẠN 2 — CỦNG CỐ GAMEPLAY CORE (STG2-01 .. STG2-10)
 console.log("\n===================================================================");
-console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + qaPassedCount}/${10 + qaTotalCount} PASSED (100%)`);
+console.log("🚀 PHẦN 3: KIỂM THỬ GIAI ĐOẠN 2 — CỦNG CỐ GAMEPLAY CORE (STG2-01 .. STG2-10)");
 console.log("===================================================================");
-if (modPassCount < 10 || qaPassedCount < qaTotalCount) process.exit(1);
+
+const stg2Results = [];
+function assertStg2(id, name, cond, detail = "") {
+  stg2Results.push({ id, name, passed: Boolean(cond), detail });
+}
+
+const balanceSrc = fs.readFileSync(path.join(ROOT_DIR, "src/data/balance.js"), "utf8");
+assertStg2(
+  "STG2-01",
+  "Bước 2.1: Bảng thông số & ROI (src/data/balance.js) có đầy đủ thông số BESS, Điện lưới & Nhân sự",
+  BESS_BASE_CAPACITY_KWH === 800 &&
+    BESS_DISCHARGE_MARGIN_BONUS === 1.35 &&
+    STAFF_TECH_SPEED_BONUS.length === 4 &&
+    STAFF_MANAGER_AMENITY_BONUS.length === 4 &&
+    balanceSrc.includes("CHARGER TIER ROI COMPARISON") &&
+    balanceSrc.includes("AMENITY TIER COMPARISON"),
+  `BESS_Cap=${BESS_BASE_CAPACITY_KWH}kWh, MarginBonus=${BESS_DISCHARGE_MARGIN_BONUS}x`
+);
+
+assertStg2(
+  "STG2-02",
+  "Bước 2.2: Cây Công Nghệ DAG (src/data/unlock-tree.js) có đủ 10 node phụ thuộc 2 nhánh",
+  Array.isArray(UNLOCK_TREE_DAG) &&
+    UNLOCK_TREE_DAG.length === 10 &&
+    UNLOCK_TREE_DAG.find(n => n.id === "tech_charger_t4").parents.includes("tech_charger_t3") &&
+    UNLOCK_TREE_DAG.find(n => n.id === "tech_am_nha_hang").parents.includes("tech_am_nha_an"),
+  `Nodes=${UNLOCK_TREE_DAG.length}`
+);
+
+assertStg2(
+  "STG2-03",
+  "Bước 2.3: Chuỗi 6 Nhiệm Vụ Chính Tuyến (src/systems/quest.js) hoạt động & trao thưởng",
+  (() => {
+    vm.runInContext("resetAllSaveData(); state.money = 150000000; installNewChargerOnLot(1);", sandbox);
+    const activeQ = vm.runInContext("getActiveMainQuest()", sandbox);
+    const claimed = vm.runInContext("claimMainQuestReward('MQ_01_INSTALL_BAY3')", sandbox);
+    const nextQ = vm.runInContext("getActiveMainQuest()", sandbox);
+    return MAIN_QUESTS_CHAIN.length === 6 && activeQ && activeQ.id === "MQ_01_INSTALL_BAY3" && claimed === true && nextQ && nextQ.id === "MQ_02_UPGRADE_AMENITY";
+  })(),
+  "MQ_01 completed & advanced to MQ_02_UPGRADE_AMENITY"
+);
+
+assertStg2(
+  "STG2-04",
+  "Bước 2.4a: Nghiên cứu mở khóa sớm Node Cây Công Nghệ (researchTechNode)",
+  (() => {
+    vm.runInContext("state.money = 200000000;", sandbox);
+    const okT3 = vm.runInContext("researchTechNode('tech_charger_t3')", sandbox);
+    const unlockedT3 = vm.runInContext("isTechNodeUnlocked('tech_charger_t3')", sandbox);
+    return okT3 === true && unlockedT3 === true;
+  })(),
+  "tech_charger_t3 researched & unlocked"
+);
+
+assertStg2(
+  "STG2-05",
+  "Bước 2.4b: Hệ thống Pin Lưu Trữ BESS (Mua sỉ điện EVN & Nâng cấp dung lượng BESS)",
+  (() => {
+    vm.runInContext("ensureProgressionState(); state.money = 200000000; state.progression.gridKwhStored = 0; state.progression.gridKwhCapacity = 800;", sandbox);
+    const bought = vm.runInContext("buyWholesaleGridKwh(250)", sandbox);
+    const upg = vm.runInContext("upgradeBessCapacity()", sandbox);
+    const stored = vm.runInContext("state.progression.gridKwhStored", sandbox);
+    const cap = vm.runInContext("state.progression.gridKwhCapacity", sandbox);
+    return bought === true && upg === true && stored === 550 && cap === 1800;
+  })(),
+  "Stored=550kWh (250+300 bonus), Cap=1800kWh"
+);
+
+assertStg2(
+  "STG2-06",
+  "Bước 2.4c: Xả điện từ kho BESS khi xe sạc giúp tăng +35% biên lợi nhuận kWh",
+  (() => {
+    const multWithBess = vm.runInContext("state.progression.gridKwhStored = 100; consumeBessKwhForCharging(20);", sandbox);
+    const remKwh = vm.runInContext("state.progression.gridKwhStored", sandbox);
+    const multEmpty = vm.runInContext("state.progression.gridKwhStored = 0; state.progression.autoBuyOffPeak = false; consumeBessKwhForCharging(20);", sandbox);
+    return Math.abs(multWithBess - 1.35) < 0.001 && remKwh === 80 && multEmpty === 1.0;
+  })(),
+  "BESS Discharge Multiplier = 1.35x"
+);
+
+assertStg2(
+  "STG2-07",
+  "Bước 2.4d: Tuyển dụng Kỹ thuật viên Trạm (+tốc độ sạc) & Quản lý Dịch vụ (+doanh thu tiện ích)",
+  (() => {
+    vm.runInContext("state.money = 200000000;", sandbox);
+    const hTech = vm.runInContext("hireOrUpgradeLotStaff(1, 'tech')", sandbox);
+    const hMgr = vm.runInContext("hireOrUpgradeLotStaff(1, 'manager')", sandbox);
+    const spdMult = vm.runInContext("getLotTechSpeedMultiplier(state.lots[0])", sandbox);
+    const mgrMult = vm.runInContext("getLotManagerAmenityMultiplier(state.lots[0])", sandbox);
+    return hTech === true && hMgr === true && spdMult === 1.15 && mgrMult === 1.20;
+  })(),
+  "TechSpd=1.15x, ManagerAmenity=1.20x"
+);
+
+assertStg2(
+  "STG2-08",
+  "Bước 2.4e: Giấy phép Quy hoạch (expansionPermits) giảm 30% chi phí mở rộng đất",
+  (() => {
+    vm.runInContext("resetAllSaveData(); ensureProgressionState(); state.money = 100000000; state.progression.expansionPermits = 1;", sandbox);
+    const beforeMoney = vm.runInContext("state.money", sandbox);
+    const baseStepCost = vm.runInContext("state.lots[0].expandStepCost", sandbox);
+    vm.runInContext("expandLotLandArea(1);", sandbox);
+    const afterMoney = vm.runInContext("state.money", sandbox);
+    const permitsLeft = vm.runInContext("state.progression.expansionPermits", sandbox);
+    const spent = beforeMoney - afterMoney;
+    return permitsLeft === 0 && spent === Math.round(baseStepCost * 0.70);
+  })(),
+  "30% Expansion Discount Verified"
+);
+
+assertStg2(
+  "STG2-09",
+  "Bước 2.4f: Sự kiện Đô thị Tương tác (Interactive Urban Events) với lựa chọn Option A / B",
+  (() => {
+    vm.runInContext("state.money = 200000000;", sandbox);
+    const ev = vm.runInContext("triggerInteractiveUrbanEvent(0)", sandbox);
+    const resolved = vm.runInContext("resolveInteractiveUrbanEvent('A')", sandbox);
+    const activeAfter = vm.runInContext("state.progression.activeChoiceEvent", sandbox);
+    return Array.isArray(INTERACTIVE_URBAN_EVENTS) && INTERACTIVE_URBAN_EVENTS.length >= 3 && Boolean(ev) && resolved === true && activeAfter === null;
+  })(),
+  "Triggered & resolved Option A"
+);
+
+assertStg2(
+  "STG2-10",
+  "Giao diện Giai đoạn 2 (src/ui/progression-panel.js) render đầy đủ BESS, Nhiệm vụ, Nhân sự & Cây DAG",
+  (() => {
+    const html1 = vm.runInContext("renderStage2LotProgressionBox(state.lots[0])", sandbox);
+    const html2 = vm.runInContext("renderStage2UnlockTreeBox()", sandbox);
+    return typeof html1 === "string" && html1.includes("BESS") && typeof html2 === "string" && html2.includes("DAG") && html2.includes("ROI");
+  })(),
+  "Stage 2 UI Panels verified"
+);
+
+let stg2PassCount = 0;
+for (const r of stg2Results) {
+  if (r.passed) stg2PassCount++;
+  console.log(`${r.passed ? "✅ PASS" : "❌ FAIL"} | [${r.id}] ${r.name} (${r.detail})`);
+}
+
+console.log("\n===================================================================");
+console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + qaPassedCount}/${20 + qaTotalCount} PASSED (100%)`);
+console.log("===================================================================");
+if (modPassCount < 10 || stg2PassCount < 10 || qaPassedCount < qaTotalCount) process.exit(1);

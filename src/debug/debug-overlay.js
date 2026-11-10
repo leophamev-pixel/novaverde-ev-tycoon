@@ -65,6 +65,10 @@ export function runDevTestAction(action) {
       globalThis.processMonthlyBilling();
     }
     if (typeof globalThis.refreshAllUI === "function") globalThis.refreshAllUI();
+  } else if (action === "bess_fill") {
+    if (typeof globalThis.buyWholesaleGridKwh === "function") globalThis.buyWholesaleGridKwh(250);
+  } else if (action === "urban_event") {
+    if (typeof globalThis.triggerInteractiveUrbanEvent === "function") globalThis.triggerInteractiveUrbanEvent();
   } else if (action === "reset") {
     if (typeof globalThis.resetAllSaveData === "function") {
       globalThis.resetAllSaveData();
@@ -156,6 +160,8 @@ export function enableDebugOverlay(show) {
         <button onclick="window.runDevTestAction('add_gc')" style="background:#7c3aed;color:#fff;border:1px solid #c084fc;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🪙 +200 GC</button>
         <button onclick="window.runDevTestAction('next_hour')" style="background:#d97706;color:#fff;border:1px solid #fcd34d;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">☀️ Tua +6 Giờ</button>
         <button onclick="window.runDevTestAction('next_month')" style="background:#e11d48;color:#fff;border:1px solid #fda4af;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">📅 Quyết toán Tháng</button>
+        <button onclick="window.runDevTestAction('bess_fill')" style="background:#0284c7;color:#fff;border:1px solid #38bdf8;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🔋 Nạp +250kWh BESS</button>
+        <button onclick="window.runDevTestAction('urban_event')" style="background:#9333ea;color:#fff;border:1px solid #d8b4fe;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🎲 Gọi Sự Kiện A/B</button>
       </div>
     `;
     document.body.appendChild(overlayEl);

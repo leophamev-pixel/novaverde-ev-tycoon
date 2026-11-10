@@ -77,6 +77,8 @@ export function serializeStateForSave() {
     yearlyGrossRevenue: sanitizeFiniteNumber(state.yearlyGrossRevenue, 0),
     yearlyOperatingProfit: sanitizeFiniteNumber(state.yearlyOperatingProfit, 0),
     yearlyPrepaidTax: sanitizeFiniteNumber(state.yearlyPrepaidTax || 0, 0),
+    progression: state.progression ? JSON.parse(JSON.stringify(state.progression)) : null,
+    quests: state.quests ? JSON.parse(JSON.stringify(state.quests)) : null,
     lastSavedAt: Date.now(),
     lots: state.lots.filter(lot => lot.owned || (lot.debtPrincipal || 0) > 0 || lot.id === 1).map(lot => ({
       id: lot.id,
@@ -86,6 +88,8 @@ export function serializeStateForSave() {
       areaM2: lot.areaM2,
       expansionCount: lot.expansionCount || 0,
       hasGuard: lot.hasGuard,
+      techStaffLevel: lot.techStaffLevel || 0,
+      managerStaffLevel: lot.managerStaffLevel || 0,
       debtPrincipal: lot.debtPrincipal || 0,
       debtInterest: lot.debtInterest || 0,
       debtDaysOverdue: lot.debtDaysOverdue || 0,
@@ -171,6 +175,12 @@ export function applyLoadedSnapshot(snap) {
   state.yearlyGrossRevenue = sanitizeFiniteNumber(snap.yearlyGrossRevenue || 0, 0);
   state.yearlyOperatingProfit = sanitizeFiniteNumber(snap.yearlyOperatingProfit || 0, 0);
   state.yearlyPrepaidTax = sanitizeFiniteNumber(snap.yearlyPrepaidTax || 0, 0);
+  if (snap.progression && typeof snap.progression === "object") {
+    state.progression = JSON.parse(JSON.stringify(snap.progression));
+  }
+  if (snap.quests && typeof snap.quests === "object") {
+    state.quests = JSON.parse(JSON.stringify(snap.quests));
+  }
   state.lastSavedAt = snap.lastSavedAt || Date.now();
 
   state.lots = createInitialLots();
@@ -184,6 +194,8 @@ export function applyLoadedSnapshot(snap) {
       if (typeof savedLot.areaM2 === "number") target.areaM2 = savedLot.areaM2;
       target.expansionCount = savedLot.expansionCount || 0;
       target.hasGuard = Boolean(savedLot.hasGuard);
+      target.techStaffLevel = savedLot.techStaffLevel || 0;
+      target.managerStaffLevel = savedLot.managerStaffLevel || 0;
       target.debtPrincipal = savedLot.debtPrincipal || 0;
       target.debtInterest = savedLot.debtInterest || 0;
       target.debtDaysOverdue = savedLot.debtDaysOverdue || 0;

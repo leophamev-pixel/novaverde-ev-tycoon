@@ -23,6 +23,7 @@ const MODULE_ORDER = [
   "src/data/lot-blueprints.js",
   "src/data/skin-catalog.js",
   "src/data/b2b-contracts.js",
+  "src/data/unlock-tree.js",
   "src/lang/lang-pack.js",
   "src/state/game-state.js",
   "src/state/ui-state.js",
@@ -37,6 +38,8 @@ const MODULE_ORDER = [
   "src/systems/economy.js",
   "src/systems/offline-earnings.js",
   "src/systems/lot-actions.js",
+  "src/systems/progression.js",
+  "src/systems/quest.js",
   "src/render/iso-utils.js",
   "src/render/camera.js",
   "src/render/draw-ground.js",
@@ -54,6 +57,7 @@ const MODULE_ORDER = [
   "src/ui/multiplayer-tab.js",
   "src/ui/shop-modal.js",
   "src/ui/offline-modal.js",
+  "src/ui/progression-panel.js",
   "src/net/leaderboard.js",
   "src/net/websocket.js",
   "src/debug/debug-overlay.js"
@@ -61,8 +65,9 @@ const MODULE_ORDER = [
 
 function stripEsModuleSyntax(code) {
   return code
+    .replace(/^\s*import\s+[\s\S]*?from\s+["'][^"']+["'];?\s*$/gm, "")
+    .replace(/^\s*import\s+["'][^"']+["'];?\s*$/gm, "")
     .split("\n")
-    .filter((line) => !/^\s*import\s+/.test(line))
     .map((line) => line.replace(/^\s*export\s+(function|const|let|var)\s+/, "$1 ").replace(/\bimport\.meta\b/g, "({})"))
     .join("\n");
 }

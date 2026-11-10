@@ -115,12 +115,17 @@ export function expandLotLandArea(lotId) {
     logEvent(L(`📐 ${lotDisp} đã đạt diện tích tối đa (${lot.areaM2} m²)!`, `📐 ${lotDisp} has reached maximum land area (${lot.areaM2} m²)!`));
     return;
   }
-  const stepCost = Math.round(lot.expandStepCost * Math.pow(1.25, curExp));
+  const rawStepCost = Math.round(lot.expandStepCost * Math.pow(1.25, curExp));
+  const hasPermit = Boolean(state.progression && state.progression.expansionPermits > 0);
+  const stepCost = hasPermit ? Math.round(rawStepCost * 0.70) : rawStepCost;
   if (state.money < stepCost) {
     logEvent(L(`⚠️ Cần ${formatVND(stepCost)} để mở rộng thêm +${lot.expandStepAreaM2} m²!`, `⚠️ Need ${formatVND(stepCost)} to expand land by +${lot.expandStepAreaM2} m²!`));
     return;
   }
   state.money -= stepCost;
+  if (hasPermit) {
+    state.progression.expansionPermits = Math.max(0, state.progression.expansionPermits - 1);
+  }
   lot.expansionCount = curExp + 1;
   lot.areaM2 += lot.expandStepAreaM2;
 
@@ -235,6 +240,7 @@ export function buyOrUpgradeAmenity(lotId, amenityId) {
 
   state.money -= cost;
   lot.amenities[amenityId] = curLvl + 1;
+  if (typeof syncNaturalTechUnlocks === "function") syncNaturalTechUnlocks();
 
   const scores = getLotAppealScores(lot);
   floatTexts.push({
@@ -310,6 +316,7 @@ export function upgradeBayTier(lotId, bayIdx) {
 
   state.money -= upgCost;
   bay.tier += 1;
+  if (typeof syncNaturalTechUnlocks === "function") syncNaturalTechUnlocks();
   const nextTier = CHARGER_TIERS[bay.tier];
   logEvent(L(
     `⚡ Nâng cấp Trụ #${bayIdx + 1} (${getLotDisplayName(lot)}) lên ${getItemName(nextTier)} (${nextTier.kw}kW • -${formatVND(upgCost)})!`,

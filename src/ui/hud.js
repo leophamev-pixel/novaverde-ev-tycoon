@@ -284,6 +284,7 @@ export function refreshAllUI() {
     const monthlyGuardLot = lot.hasGuard ? (lot.guardMonthlyWage || 6000000) : 0;
 
     let html = renderSpatialAllocationBox(lot);
+    if (typeof renderStage2LotProgressionBox === "function") html += renderStage2LotProgressionBox(lot);
 
     html += `
       <div class="upgrade-card selected-lot">
@@ -470,6 +471,7 @@ export function refreshAllUI() {
     `;
   } else {
     let amHtml = renderSpatialAllocationBox(lot);
+    if (typeof renderStage2UnlockTreeBox === "function") amHtml += renderStage2UnlockTreeBox();
 
     AMENITY_CATALOG.forEach(item => {
       const lvl = (lot.amenities && lot.amenities[item.id]) || 0;

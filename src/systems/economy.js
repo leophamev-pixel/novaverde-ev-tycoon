@@ -170,7 +170,8 @@ export function getLotAmenityBonusPerCar(lot) {
   const landBuff = getLotLandscapeBuff(lot);
   const tl = getHanoiWeeklyTimelineState();
   const skinMult = getActiveStationSkin().amenityRevMult || 1.0;
-  return Math.round(total * landBuff.revMulti * (tl.amenityMult || 1.0) * skinMult);
+  const managerMult = typeof getLotManagerAmenityMultiplier === "function" ? getLotManagerAmenityMultiplier(lot) : 1.0;
+  return Math.round(total * landBuff.revMulti * (tl.amenityMult || 1.0) * skinMult * managerMult);
 }
 
 export function getLotOwnedAmenitiesList(lot) {
@@ -263,17 +264,20 @@ export function updateSimulation(dt) {
     const marginPerKwh = Math.round(baseMarginPerKwh * (hasQuantumCore ? 1.20 : 1.0) * adX2Mult);
     const amenityBonus = Math.round(getLotAmenityBonusPerCar(lot) * adX2Mult);
 
+    const techSpd = typeof getLotTechSpeedMultiplier === "function" ? getLotTechSpeedMultiplier(lot) : 1.0;
+
     lot.bays.forEach((bay, bIdx) => {
       if (!bay.car) return;
       const c = bay.car;
-      const kw = CHARGER_TIERS[bay.tier].kw * speedMult;
+      const kw = CHARGER_TIERS[bay.tier].kw * speedMult * techSpd;
 
       if (c.state === "CHARGING") {
         const kwhAdded = (kw * (effDt / 8.5));
         const actualAdd = Math.min(c.needKwh - c.chargedKwh, kwhAdded);
         c.chargedKwh += actualAdd;
 
-        const revEarned = actualAdd * marginPerKwh;
+        const bessBonus = typeof consumeBessKwhForCharging === "function" ? consumeBessKwhForCharging(actualAdd) : 1.0;
+        const revEarned = actualAdd * marginPerKwh * bessBonus;
         state.money += revEarned;
         state.totalRevenueAllTime += revEarned;
         state.totalProfitAllTime += revEarned;

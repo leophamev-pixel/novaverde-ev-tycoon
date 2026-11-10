@@ -13,6 +13,7 @@ import "./data/map-data.js";
 import "./data/lot-blueprints.js";
 import "./data/skin-catalog.js";
 import "./data/b2b-contracts.js";
+import "./data/unlock-tree.js";
 
 import "./lang/lang-pack.js";
 
@@ -30,6 +31,8 @@ import "./systems/vehicle-physics.js";
 import "./systems/economy.js";
 import "./systems/offline-earnings.js";
 import "./systems/lot-actions.js";
+import "./systems/progression.js";
+import "./systems/quest.js";
 
 import "./render/iso-utils.js";
 import "./render/camera.js";
@@ -49,6 +52,7 @@ import "./ui/finance-tab.js";
 import "./ui/multiplayer-tab.js";
 import "./ui/shop-modal.js";
 import "./ui/offline-modal.js";
+import "./ui/progression-panel.js";
 
 import "./net/leaderboard.js";
 import "./net/websocket.js";
