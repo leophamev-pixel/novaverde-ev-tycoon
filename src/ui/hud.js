@@ -614,6 +614,7 @@ export function triggerHaptic(ms = 18) {
 
 export function playSfx(kind = "click") {
   if (!sfxEnabled) return;
+  if (typeof playProceduralSfx === "function") return playProceduralSfx(kind);
   try {
     if (!audioCtx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -665,6 +666,10 @@ export function playSfx(kind = "click") {
 
 export function toggleSoundEffects() {
   sfxEnabled = !sfxEnabled;
+  if (typeof audioSettings !== "undefined") {
+    audioSettings.sfxEnabled = sfxEnabled;
+    if (typeof saveAudioSettings === "function") saveAudioSettings();
+  }
   const btn = document.getElementById("btn-toggle-sfx");
   if (btn) {
     btn.textContent = sfxEnabled ? "🔊" : "🔇";

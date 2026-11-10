@@ -22,6 +22,9 @@ import { BALANCE_SUMMARY, FRANCHISE_MARGIN_PER_KWH, DIRECT_MARGIN_PER_KWH, OFFLI
 import { UNLOCK_TREE_DAG } from "../src/data/unlock-tree.js";
 import { MAIN_QUESTS_CHAIN } from "../src/systems/quest.js";
 import { INTERACTIVE_URBAN_EVENTS } from "../src/systems/progression.js";
+import { audioSettings, setAudioChannelVolume, toggleBgmMusic } from "../src/systems/audio.js";
+import { computeViewportSignature, checkAndUpdateViewportDirty, isWorldPointInViewport, recordRenderFrameTiming, getRenderOptimizationSummary } from "../src/render/dirty-tracker.js";
+import { computeEmpireTelemetrySnapshot, renderStage3AnalyticsAndAudioBox } from "../src/systems/analytics.js";
 import { AMENITY_CATALOG } from "../src/data/amenity-catalog.js";
 import { CHARGER_TIERS } from "../src/data/charger-tiers.js";
 import { EV_MODELS, ICE_CAR_MODELS, SCOOTER_MODELS } from "../src/data/vehicle-models.js";
@@ -427,7 +430,133 @@ for (const r of stg2Results) {
   console.log(`${r.passed ? "✅ PASS" : "❌ FAIL"} | [${r.id}] ${r.name} (${r.detail})`);
 }
 
+
+// BƯỚC 5: KIỂM THỬ GIAI ĐOẠN 3 — HỆ THỐNG PHỤ TRỢ & TỐI ƯU KỸ THUẬT (STG3-01 .. STG3-10)
 console.log("\n===================================================================");
-console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + qaPassedCount}/${20 + qaTotalCount} PASSED (100%)`);
+console.log("⚡ PHẦN 4: KIỂM THỬ GIAI ĐOẠN 3 — ÂM THANH, DIRTY TRACKER & ANALYTICS (STG3-01 .. STG3-10)");
 console.log("===================================================================");
-if (modPassCount < 10 || stg2PassCount < 10 || qaPassedCount < qaTotalCount) process.exit(1);
+
+const stg3Results = [];
+function assertStg3(id, name, cond, detail = "") {
+  stg3Results.push({ id, name, passed: Boolean(cond), detail });
+}
+
+assertStg3(
+  "STG3-01",
+  "Bước 3.1a: Module src/systems/audio.js khởi tạo đúng cấu hình kênh BGM & SFX",
+  audioSettings && typeof audioSettings.sfxVolume === "number" && typeof audioSettings.bgmVolume === "number",
+  `SFX=${audioSettings.sfxVolume}, BGM=${audioSettings.bgmVolume}`
+);
+
+assertStg3(
+  "STG3-02",
+  "Bước 3.1b: Điều chỉnh âm lượng độc lập từng kênh BGM/SFX & lưu LocalStorage",
+  (() => {
+    const vSfx = vm.runInContext("setAudioChannelVolume('sfx', 65)", sandbox);
+    const vBgm = vm.runInContext("setAudioChannelVolume('bgm', 30)", sandbox);
+    const saved = vm.runInContext("localStorage.getItem('NV_AUDIO_SETTINGS_V3')", sandbox);
+    return Math.abs(vSfx - 0.65) < 0.01 && Math.abs(vBgm - 0.30) < 0.01 && Boolean(saved && saved.includes("0.65"));
+  })(),
+  "Saved NV_AUDIO_SETTINGS_V3 verified"
+);
+
+assertStg3(
+  "STG3-03",
+  "Bước 3.1c: Bật/Tắt nhạc nền Đô thị Procedural Lo-fi BGM (toggleBgmMusic)",
+  (() => {
+    const onState = vm.runInContext("toggleBgmMusic()", sandbox);
+    const offState = vm.runInContext("toggleBgmMusic()", sandbox);
+    return onState === true && offState === false;
+  })(),
+  "BGM toggle ON -> OFF verified"
+);
+
+assertStg3(
+  "STG3-04",
+  "Bước 3.2a: Viewport Signature & Dirty State Tracker phát hiện chính xác khi Camera đứng yên / di chuyển",
+  (() => {
+    const firstDirty = checkAndUpdateViewportDirty({ x: 100, y: 200, zoom: 1 }, 420, 800, true, false, 0, 0);
+    const secondDirty = checkAndUpdateViewportDirty({ x: 100, y: 200, zoom: 1 }, 420, 800, true, false, 0, 0);
+    const movedDirty = checkAndUpdateViewportDirty({ x: 350, y: 200, zoom: 1 }, 420, 800, true, false, 0, 0);
+    return firstDirty === true && secondDirty === false && movedDirty === true;
+  })(),
+  "Dirty=true on move, Dirty=false when static (Cache Hit)"
+);
+
+assertStg3(
+  "STG3-05",
+  "Bước 3.2b: Bộ kiểm tra Frustum / Viewport Culling (isWorldPointInViewport) lọc thực thể ngoài màn hình",
+  (() => {
+    const cam = { x: 0, y: 0, zoom: 1 };
+    const inside = isWorldPointInViewport(50, -40, cam, 420, 800, 200);
+    const outside = isWorldPointInViewport(4500, -3200, cam, 420, 800, 200);
+    return inside === true && outside === false;
+  })(),
+  "Inside=true, FarOutside=false"
+);
+
+assertStg3(
+  "STG3-06",
+  "Bước 3.2c: Đo lường thời gian Render khung hình & tỷ lệ Cache Hit (getRenderOptimizationSummary)",
+  (() => {
+    recordRenderFrameTiming(1.65, 42, 5358);
+    const sum = getRenderOptimizationSummary();
+    return sum && sum.avgFrameTimeMs > 0 && sum.avgFrameTimeMs < 20 && sum.cacheHitRatePct >= 0;
+  })(),
+  `AvgFrame=${getRenderOptimizationSummary().avgFrameTimeMs}ms, HitRate=${getRenderOptimizationSummary().cacheHitRatePct}%`
+);
+
+assertStg3(
+  "STG3-07",
+  "Bước 3.3a: Hệ thống Telemetry (computeEmpireTelemetrySnapshot) tính đúng công suất kW & tỷ lệ lấp đầy",
+  (() => {
+    vm.runInContext("resetAllSaveData();", sandbox);
+    const snap = vm.runInContext("computeEmpireTelemetrySnapshot()", sandbox);
+    return snap && snap.ownedLotsCount === 1 && snap.totalBays >= 2 && snap.totalInstalledKw >= 22;
+  })(),
+  "Telemetry snapshot verified on Lot #1"
+);
+
+assertStg3(
+  "STG3-08",
+  "Bước 3.3b: Chẩn đoán AI Bottleneck tự động cảnh báo khi có Xe xăng đỗ lấn chỗ (ICE_SQUATTING)",
+  (() => {
+    vm.runInContext("state.lots[0].bays[0].car = { state: 'ICE_SQUATTING' };", sandbox);
+    const snap = vm.runInContext("computeEmpireTelemetrySnapshot()", sandbox);
+    vm.runInContext("state.lots[0].bays[0].car = null;", sandbox);
+    return snap && snap.iceSquattingBays === 1 && snap.bottlenecks.some(b => b.severity === "HIGH");
+  })(),
+  "HIGH severity bottleneck detected for ICE_SQUATTING"
+);
+
+assertStg3(
+  "STG3-09",
+  "Bước 3.3c: Chẩn đoán AI Bottleneck phát hiện khi kho Pin BESS cạn kiệt (0 kWh)",
+  (() => {
+    vm.runInContext("ensureProgressionState(); state.progression.gridKwhStored = 0;", sandbox);
+    const snap = vm.runInContext("computeEmpireTelemetrySnapshot()", sandbox);
+    return snap && snap.bottlenecks.some(b => b.severity === "MEDIUM" && b.icon === "🔋");
+  })(),
+  "MEDIUM severity bottleneck detected for empty BESS"
+);
+
+assertStg3(
+  "STG3-10",
+  "Giao diện Trung tâm Phân tích & Âm thanh (renderStage3AnalyticsAndAudioBox) hiển thị đầy đủ trên HUD",
+  (() => {
+    const html = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
+    return typeof html === "string" && html.includes("BGM") && html.includes("SFX") && html.includes("Render");
+  })(),
+  "Stage 3 UI Box verified"
+);
+
+let stg3PassCount = 0;
+for (const r of stg3Results) {
+  if (r.passed) stg3PassCount++;
+  console.log(`${r.passed ? "✅ PASS" : "❌ FAIL"} | [${r.id}] ${r.name} (${r.detail})`);
+}
+
+console.log("\n===================================================================");
+console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg3PassCount}/10 STAGE-3 TESTS +  ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + stg3PassCount + qaPassedCount}/${30 + qaTotalCount} PASSED (100%)`);
+console.log("===================================================================");
+if (modPassCount < 10 || stg2PassCount < 10 || stg3PassCount < 10 || qaPassedCount < qaTotalCount) process.exit(1);

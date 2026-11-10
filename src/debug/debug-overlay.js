@@ -18,7 +18,7 @@ let togglePillEl = null;
 export function isDebugAllowed() {
   if (typeof window === "undefined" || !window.location) return false;
   const host = window.location.hostname || "";
-  return host === "localhost" || host === "127.0.0.1";
+  return host === "localhost" || host === "127.0.0.1" || window.location.protocol === "file:";
 }
 
 export function runDevTestAction(action) {

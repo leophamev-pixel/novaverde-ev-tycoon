@@ -193,7 +193,8 @@ export function renderStage2LotProgressionBox(lot) {
     `;
   }
 
-  return questHtml + choiceEvtHtml + gridBessHtml + staffHtml;
+  const stg3Html = typeof globalThis.renderStage3AnalyticsAndAudioBox === "function" ? globalThis.renderStage3AnalyticsAndAudioBox() : "";
+  return questHtml + choiceEvtHtml + gridBessHtml + staffHtml + stg3Html;
 }
 
 export function renderStage2UnlockTreeBox() {

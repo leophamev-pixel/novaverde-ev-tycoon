@@ -33,7 +33,10 @@ import "./systems/offline-earnings.js";
 import "./systems/lot-actions.js";
 import "./systems/progression.js";
 import "./systems/quest.js";
+import "./systems/audio.js";
+import "./systems/analytics.js";
 
+import "./render/dirty-tracker.js";
 import "./render/iso-utils.js";
 import "./render/camera.js";
 import "./render/draw-ground.js";

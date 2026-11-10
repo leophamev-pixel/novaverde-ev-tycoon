@@ -24,7 +24,7 @@ export function renderTaxAndDebtTab() {
   const citRatePct = Math.round(getCitRateByRevenue(state.yearlyGrossRevenue) * 100);
   const totalDebt = getTotalPlayerDebt();
 
-  let html = `
+  let html = (typeof renderStage3AnalyticsAndAudioBox === "function" ? renderStage3AnalyticsAndAudioBox() : "") + `
     <div class="upgrade-card selected-lot">
       <div class="u-info">
         <div class="u-title">

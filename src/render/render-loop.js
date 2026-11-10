@@ -3,6 +3,7 @@
  * Vòng lặp Render chính drawCartoonMap() với thuật toán xếp lớp chiều sâu Painter's Algorithm
  */
 export function drawCartoonMap() {
+  const _frameStartMs = typeof performance !== "undefined" ? performance.now() : Date.now();
   const wrap = document.getElementById("canvas-wrap");
   const vw = wrap.clientWidth || 420;
   const vh = wrap.clientHeight || 800;
@@ -38,6 +39,10 @@ export function drawCartoonMap() {
       ? `${curCamSec.districtCodeEn}. ${(curCamSec.districtNameEn || "").replace(" District", "")} • ${(curCamSec.wardNameEn || "").replace(" Ward", "")}`
       : `${curCamSec.districtCode}. ${curCamSec.districtName.replace("Quận ", "")} • ${curCamSec.wardName.replace("P. ", "")}`;
     if (navLbl.textContent !== expectedTxt) navLbl.textContent = expectedTxt;
+  }
+
+  if (typeof checkAndUpdateViewportDirty === "function" && curCamSec) {
+    checkAndUpdateViewportDirty(camera, vw, vh, state.isoView, env.isNight, curCamSec.districtIdx, curCamSec.wardIdx);
   }
 
   // SPATIAL SECTOR CULLING (6 × 6 = 36 PHƯỜNG LIỀN KỀ): Chỉ kết xuất các Phường đang lọt trong khung nhìn Camera để khóa cứng 60 FPS!
@@ -200,6 +205,10 @@ export function drawCartoonMap() {
 
   if (document.getElementById("radar-card").classList.contains("show")) {
     drawMinimapRadar(vw, vh);
+  }
+  if (typeof recordRenderFrameTiming === "function") {
+    const _elMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - _frameStartMs;
+    recordRenderFrameTiming(_elMs, renderQueue.length, Math.max(0, 5400 - renderQueue.length));
   }
 }
 
