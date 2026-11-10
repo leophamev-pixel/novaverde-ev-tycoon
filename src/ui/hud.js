@@ -96,7 +96,7 @@ export function updateGreenCoinHUD() {
   const gcSub = document.getElementById("gc-sub-lbl");
   if (gcSub) {
     const sk = getActiveStationSkin();
-    gcSub.textContent = `${sk.icon} ${L("Tools•Skin", "Tools•Skin")}`;
+    gcSub.textContent = `${sk.icon} ${L("Công cụ•Skin", "Tools•Skins")}`;
   }
 }
 
@@ -147,10 +147,10 @@ export function refreshAllUI() {
       if (mVal.botOwner) {
         ctxSub.innerHTML = `<span>🤖 <b>${mVal.botOwner.ownerName}</b> (${mVal.botChargers}🔌)</span><span>💼 ${L("Mua lại:", "Buyout:")} ${formatCompactVND(mVal.botBuyoutPrice)}</span><span>📈 +${mVal.pctChange}%</span>`;
       } else {
-        ctxSub.innerHTML = `<span>🔑 ${L("Thuê:", "Lease:")} ${formatCompactVND(effectiveLeaseCost)}</span><span>🏠 ${L("Mua:", "Buy:")} ${formatCompactVND(effectiveBuyCost)}</span><span>⚡ ${pendingBiz === "direct" ? "Direct" : "Franchise"}</span>`;
+        ctxSub.innerHTML = `<span>🔑 ${L("Thuê:", "Lease:")} ${formatCompactVND(effectiveLeaseCost)}</span><span>🏠 ${L("Mua:", "Buy:")} ${formatCompactVND(effectiveBuyCost)}</span><span>⚡ ${pendingBiz === "direct" ? L("Tự Doanh", "Direct Sale") : L("Nhượng Quyền", "Franchise")}</span>`;
       }
     } else {
-      const lotModeTag = getLotBusinessMode(lot) === "direct" ? "🏢Direct (+1.35G$)" : "🤝Franchise (+0.75G$)";
+      const lotModeTag = getLotBusinessMode(lot) === "direct" ? L("🏢Tự Doanh (+1.35G$)", "🏢Direct (+1.35G$)") : L("🤝Nhượng Quyền (+0.75G$)", "🤝Franchise (+0.75G$)");
       ctxSub.innerHTML = `<span>🔌 ${sp.activeChargers}/${sp.maxChargersPossibleNow} ${L("Trụ", "Bays")}</span><span>${lotModeTag}</span><span>🚕${appeal.taxiTotal}${L("đ", "pt")} | 🚗${appeal.casualTotal}${L("đ", "pt")}</span>`;
     }
   }
@@ -170,7 +170,7 @@ export function refreshAllUI() {
       if (mVal.botOwner) {
         quickLandBtn.textContent = `💼 ${L("Thâu Tóm", "Buyout")} (${formatCompactVND(mVal.botBuyoutPrice)})`;
         quickLandBtn.onclick = () => buyoutLotFromBot(lot.id);
-        quickExpandBtn.textContent = `🎬 +35K G$ (Ad)`;
+        quickExpandBtn.textContent = L("🎬 +35K G$ (QC)", "🎬 +35K G$ (Ad)");
         quickExpandBtn.onclick = () => startRewardedVideoAd("ad_cash");
       } else {
         quickLandBtn.textContent = `📝 ${L("Thuê", "Lease")} (${formatCompactVND(effectiveLeaseCost)})`;
@@ -505,7 +505,7 @@ export function refreshAllUI() {
           </div>
           <div>
             ${isMax
-              ? `<button class="u-btn maxed" disabled>Max (3/3)</button>`
+              ? `<button class="u-btn maxed" disabled>${L("Tối đa (3/3)", "Max (3/3)")}</button>`
               : (!enoughSpace
                   ? `<button class="u-btn secondary" onclick="expandLotLandArea(${lot.id})">${L(`Thiếu ${deltaM2Needed - sp.freeM2}m²<br/>(Mở Đất)`, `Need ${deltaM2Needed - sp.freeM2}m²<br/>(Expand)`)}</button>`
                   : `<button class="u-btn ${lvl === 0 ? "warn" : ""}" ${state.money < nextCost || lot.lockedByDebt ? "disabled" : ""} onclick="buyOrUpgradeAmenity(${lot.id}, '${item.id}')">

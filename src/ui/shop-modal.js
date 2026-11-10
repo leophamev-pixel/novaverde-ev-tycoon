@@ -210,7 +210,7 @@ export function renderGreenCoinShopModal() {
     <div style="background:linear-gradient(135deg, #0f172a, #1e293b); color:#fff; border:2.5px solid #fbbf24; border-radius:14px; padding:9px 11px; margin-bottom:9px;">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
         <div>
-          <div style="font-size:10px; color:#cbd5e1; font-weight:800;">${L("HỆ TIỀN TỆ THỐNG NHẤT (KHÔNG SWAP)", "UNIFIED DUAL-CURRENCY ECONOMY")}</div>
+          <div style="font-size:10px; color:#cbd5e1; font-weight:800;">${L("HỆ TIỀN TỆ THỐNG NHẤT (KHÔNG ĐỔI CHÉO)", "UNIFIED DUAL-CURRENCY ECONOMY")}</div>
           <div style="font-size:12.5px; font-weight:900; margin-top:2px;">
             <span style="color:#34d399;">💵 ${formatVND(state.money)}</span>
             <span style="margin:0 6px; opacity:0.4;">|</span>
@@ -235,11 +235,11 @@ export function renderGreenCoinShopModal() {
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:7px; padding-top:6px; border-top:1px dashed rgba(251, 191, 36, 0.35); flex-wrap:wrap;">
         <div style="font-size:8.6px; color:#e2e8f0; font-weight:700;">
-          🚫 <b>${L("Gói Không Tiêu Hao (Non-Consumable):", "Non-Consumable Store Pack:")}</b> ${L("Tắt toàn bộ Banner & Interstitial Ads vĩnh viễn + Tặng 150 GC", "Remove all Banner & Interstitial Ads forever + 150 GC Bonus")}
+          🚫 <b>${L("Gói Mua Vĩnh Viễn:", "Non-Consumable Store Pack:")}</b> ${L("Tắt toàn bộ Quảng cáo vĩnh viễn + Tặng 150 GC", "Remove all Banner & Interstitial Ads forever + 150 GC Bonus")}
         </div>
         <div style="display:flex; gap:4px;">
           <button class="u-btn ${state.removeAdsOwned ? 'maxed' : 'secondary'}" style="min-width:92px; padding:4px 8px;" ${state.removeAdsOwned ? 'disabled' : ''} onclick="buyRemoveAdsPack()">
-            ${state.removeAdsOwned ? L("✅ Đã Sở Hữu", "✅ Owned") : L("🚫 Remove Ads ($2.99)", "🚫 Remove Ads ($2.99)")}
+            ${state.removeAdsOwned ? L("✅ Đã Sở Hữu", "✅ Owned") : L("🚫 Tắt Quảng Cáo ($2.99)", "🚫 Remove Ads ($2.99)")}
           </button>
           <button class="sheet-mini-btn" onclick="restoreIapPurchases()" title="${L('Khôi phục các gói Vĩnh Viễn đã mua trên Store', 'Restore Non-Consumable Store Purchases')}">
             🔄 ${L("Khôi phục IAP", "Restore IAP")}
@@ -304,7 +304,7 @@ export function renderGreenCoinShopModal() {
 
     <!-- PHẦN 2: VẬT PHẨM CÔNG NGHỆ VĨNH VIỄN (TECH ITEMS & BOOSTERS) -->
     <div style="font-weight:900; font-size:10.5px; color:#78350f; margin:8px 0 4px;">
-      🎒 ${L("2. VẬT PHẨM CÔNG NGHỆ & ĐẶC QUYỀN VĨNH VIỄN (TECH ITEMS)", "2. PERMANENT TECH ITEMS & NETWORK BOOSTERS")}
+      🎒 ${L("2. VẬT PHẨM CÔNG NGHỆ & ĐẶC QUYỀN VĨNH VIỄN", "2. PERMANENT TECH ITEMS & NETWORK BOOSTERS")}
     </div>
     ${GREENCOIN_ITEMS_CATALOG.map(it => {
       const owned = Boolean(state.ownedItems[it.id]);
@@ -326,7 +326,7 @@ export function renderGreenCoinShopModal() {
 
     <!-- PHẦN 3: CÔNG CỤ ĐIỀU HÀNH ĐẶC QUYỀN (VIP TOOLS SỬ DỤNG GREENCOIN) -->
     <div style="font-weight:900; font-size:10.5px; color:#78350f; margin:8px 0 4px;">
-      🛠️ ${L("3. CÔNG CỤ ĐIỀU HÀNH ĐẶC QUYỀN CEO (VIP TOOLS)", "3. CEO VIP OPERATIONAL TOOLS (INSTANT USE)")}
+      🛠️ ${L("3. CÔNG CỤ ĐIỀU HÀNH ĐẶC QUYỀN CEO", "3. CEO VIP OPERATIONAL TOOLS (INSTANT USE)")}
     </div>
     ${GREENCOIN_TOOLS_CATALOG.map(tl => `
       <div class="upgrade-card expand-highlight">
@@ -460,7 +460,7 @@ export function updateRewardedAdModalUI() {
   body.innerHTML = `
     <div style="background:linear-gradient(135deg, #0f172a, #1e293b); border:2.5px solid #38bdf8; border-radius:16px; padding:14px; text-align:center; color:#fff;">
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#94a3b8; margin-bottom:8px;">
-        <span>📺 SPONSORED VIDEO AD •🔇 GAME AUDIO MUTED</span>
+        <span>📺 ${L("VIDEO TÀI TRỢ • 🔇 ĐÃ TẮT TIẾNG GAME", "SPONSORED VIDEO AD • 🔇 GAME AUDIO MUTED")}</span>
         <span style="background:#0284c7; color:#fff; padding:1.5px 7px; border-radius:99px; font-weight:900;">
           ${done ? L("✅ ĐÃ XEM XONG", "✅ COMPLETED") : L(`⏳ Còn ${activeAdWatchSession.remainingSec}s...`, `⏳ ${activeAdWatchSession.remainingSec}s left...`)}
         </span>

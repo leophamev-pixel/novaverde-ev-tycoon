@@ -68,7 +68,7 @@ export function renderSpatialAllocationBox(lot) {
         <div>
           <div style="font-weight:900; font-size:10.2px; color:#291507;">
             📐 ${L("Diện tích:", "Area:")} <span style="color:#047857">${sp.totalAreaM2}m²</span> • ${L("Trống:", "Free:")} <b style="color:#0284c7">${sp.freeM2}m²</b>
-            <span class="u-badge area" style="margin-left:4px;">${L("Trần:", "Cap:")} ${sp.activeChargers}/${sp.maxChargersPossibleNow}🔌 (Max ${sp.maxChargersAtFullExpansion})</span>
+            <span class="u-badge area" style="margin-left:4px;">${L("Trần:", "Cap:")} ${sp.activeChargers}/${sp.maxChargersPossibleNow}🔌 (${L("Tối đa", "Max")} ${sp.maxChargersAtFullExpansion})</span>
           </div>
         </div>
         ${canExpandMore ? `
@@ -126,7 +126,7 @@ export function renderBayActionButtons(lot, bay, idx, curTier, nextTier) {
       </button>
     `;
   } else {
-    btns += `<button class="u-btn maxed" disabled>Max 120kW</button>`;
+    btns += `<button class="u-btn maxed" disabled>${L("Tối đa 120kW", "Max 120kW")}</button>`;
   }
   return btns;
 }

@@ -1074,7 +1074,7 @@ if (!container) {
 const u = sdkState.user;
 const provBadge = u.provider === "email"
   ? "📧 Email"
-  : (u.provider === "google" ? "🇬 Google" : tr("👤 Khách (Guest)", "👤 Guest"));
+  : (u.provider === "google" ? "🇬 Google" : tr("👤 Khách", "👤 Guest"));
 const syncTimeStr = sdkState.lastCloudSyncAt > 0
   ? new Date(sdkState.lastCloudSyncAt).toLocaleTimeString(window.currentLang === "en" ? "en-US" : "vi-VN")
   : tr("Tự động", "Auto");
@@ -1102,13 +1102,13 @@ container.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
       <div>
         <div style="font-size:8.2px; color:#7dd3fc; font-weight:900; letter-spacing:0.3px;">
-          🔥 AUTO CLOUD SAVE: <span style="color:#4ade80;">ON (${FIREBASE_CONFIG.projectId})</span>
+          🔥 ${tr("TỰ ĐỘNG LƯU ĐÁM MÂY:", "AUTO CLOUD SAVE:")} <span style="color:#4ade80;">${tr("BẬT", "ON")} (${FIREBASE_CONFIG.projectId})</span>
         </div>
         <div style="font-size:12px; font-weight:900; color:#fef08a; margin-top:2px;">
           ${provBadge}: ${u.displayName} ${u.email ? `(${u.email})` : ''}
         </div>
         <div style="font-size:8.2px; color:#cbd5e1; margin-top:1px;">
-          UID: <code>${u.uid.slice(0, 14)}</code> • ☁️ Cloud: <b>${syncTimeStr}</b> • 🔒 Anti-Cheat: <b style="color:#4ade80;">1x Verified</b>
+          UID: <code>${u.uid.slice(0, 14)}</code> • ☁️ ${tr("Đám mây:", "Cloud:")} <b>${syncTimeStr}</b> • 🔒 ${tr("Chống gian lận:", "Anti-Cheat:")} <b style="color:#4ade80;">${tr("1x Chuẩn", "1x Verified")}</b>
         </div>
       </div>
       ${u.provider !== "guest" ? `
@@ -1140,7 +1140,7 @@ container.innerHTML = `
       </div>
       <button class="pop-btn green" style="width:100%; padding:10px; font-size:12.5px; font-weight:900; background:linear-gradient(180deg, #fde047, #f59e0b); color:#291507; border-color:#b45309;"
         onclick="window.NovaVerdeMobileSDK.applyProfileAndTapToPlay()">
-        ▶️ ${tr("CHẠM ĐỂ VÀO ĐẾ CHẾ (TAP TO PLAY)", "TAP TO PLAY EMPIRE")}
+        ▶️ ${tr("CHẠM ĐỂ VÀO ĐẾ CHẾ", "TAP TO PLAY EMPIRE")}
       </button>
     </div>
 
@@ -1681,7 +1681,7 @@ if (sdkState.titleMode === "email_signup") {
     </div>
   `;
 } else if (sdkState.titleMode === "tap_to_play") {
-  const provLabel = u.provider === "apple" ? " Apple" : (u.provider === "google" ? "G Google" : "Guest");
+  const provLabel = u.provider === "apple" ? " Apple" : (u.provider === "google" ? "G Google" : tr("Khách", "Guest"));
   actionAreaHtml = `
     <div style="display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; max-width:400px;">
       <div style="display:flex; align-items:center; gap:8px; background:rgba(15, 23, 42, 0.9); border:1.5px solid rgba(52, 211, 153, 0.85); border-radius:99px; padding:5px 14px; font-size:10px; font-weight:800; color:#ecfdf5; box-shadow:0 4px 12px rgba(0,0,0,0.45);">
@@ -1695,7 +1695,7 @@ if (sdkState.titleMode === "email_signup") {
       <div class="nv-ts-btn-row">
         <button class="nv-ts-login-btn google" style="flex:1; height:48px; font-size:14px; letter-spacing:0.8px; background:linear-gradient(180deg, #fde047 0%, #eab308 100%); color:#1e293b; border:2px solid #ffffff;"
           onclick="window.NovaVerdeMobileSDK.enterGameFromTitleScreen()">
-          ▶️ ${tr("CHẠM ĐỂ VÀO GAME (TAP TO PLAY)", "TAP TO PLAY")}
+          ▶️ ${tr("CHẠM ĐỂ VÀO ĐẾ CHẾ", "TAP TO PLAY")}
         </button>
         <button class="nv-ts-login-btn guest" style="flex:0 0 auto; width:auto; height:48px; padding:0 11px; font-size:10px;"
           onclick="window.NovaVerdeMobileSDK.openTitleOnboardingEditor()" title="${tr('Đổi Tên Tập đoàn & Màu Skin', 'Edit Corporation Name & Skin')}">
@@ -1712,14 +1712,14 @@ if (sdkState.titleMode === "email_signup") {
   actionAreaHtml = `
     <div class="nv-ts-btn-row">
       <div class="nv-ts-btn-wrap">
-        ${lastProv === "guest" ? `<div class="nv-ts-last-login-tag">${tr("Last Login", "Last Login")}</div>` : ""}
+        ${lastProv === "guest" ? `<div class="nv-ts-last-login-tag">${tr("Đăng nhập gần nhất", "Last Login")}</div>` : ""}
         <button class="nv-ts-login-btn guest" onclick="window.NovaVerdeMobileSDK.handleTitleLoginClick('guest')">
-          GUEST
+          ${tr("CHƠI KHÁCH", "GUEST")}
         </button>
       </div>
 
       <div class="nv-ts-btn-wrap">
-        ${lastProv === "google" ? `<div class="nv-ts-last-login-tag">${tr("Last Login", "Last Login")}</div>` : ""}
+        ${lastProv === "google" ? `<div class="nv-ts-last-login-tag">${tr("Đăng nhập gần nhất", "Last Login")}</div>` : ""}
         <button class="nv-ts-login-btn google" onclick="window.NovaVerdeMobileSDK.handleTitleLoginClick('google')">
           <span style="font-weight:900; color:#1d4ed8; background:#fff; width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px;">G</span>
           <span>${tr("Google", "Google")}</span>
@@ -1727,9 +1727,9 @@ if (sdkState.titleMode === "email_signup") {
       </div>
 
       <div class="nv-ts-btn-wrap">
-        ${lastProv === "email" ? `<div class="nv-ts-last-login-tag">${tr("Last Login", "Last Login")}</div>` : ""}
+        ${lastProv === "email" ? `<div class="nv-ts-last-login-tag">${tr("Đăng nhập gần nhất", "Last Login")}</div>` : ""}
         <button class="nv-ts-login-btn" style="background:linear-gradient(180deg,#10b981,#059669); color:#fff; border:1px solid #6ee7b7;" onclick="window.NovaVerdeMobileSDK.openEmailSignUpOnTitle()">
-          📧 <span>${tr("Email / Sign-Up", "Email / Sign-Up")}</span>
+          📧 <span>${tr("Email / Đăng Ký", "Email / Sign-Up")}</span>
         </button>
       </div>
     </div>
@@ -1741,21 +1741,21 @@ ts.innerHTML = `
   <div class="nv-ts-content-layer">
     <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-top:calc(env(safe-area-inset-top, 6px) + 6px);">
       <div class="nv-ts-version-ribbon">
-        Version 2.1.10540
+        ${tr("Phiên bản 3.0.10540", "Version 3.0.10540")}
       </div>
 
       <div class="nv-ts-right-tools">
         <div class="nv-ts-tool-item" onclick="window.NovaVerdeMobileSDK.showTitleHelpAlert()">
           <div class="nv-ts-tool-circle">🎧</div>
-          <span class="nv-ts-tool-lbl">${tr("Help", "Help")}</span>
+          <span class="nv-ts-tool-lbl">${tr("Trợ giúp", "Help")}</span>
         </div>
         <div class="nv-ts-tool-item" onclick="window.NovaVerdeMobileSDK.toggleTitleLanguage()">
           <div class="nv-ts-tool-circle">🌐</div>
-          <span class="nv-ts-tool-lbl">${tr("Language", "Language")}</span>
+          <span class="nv-ts-tool-lbl">${tr("Ngôn ngữ", "Language")}</span>
         </div>
         <div class="nv-ts-tool-item" onclick="window.NovaVerdeMobileSDK.repairAndRestoreCloudOnTitle()">
           <div class="nv-ts-tool-circle">🛠️</div>
-          <span class="nv-ts-tool-lbl">${tr("Reset", "Reset")}</span>
+          <span class="nv-ts-tool-lbl">${tr("Đặt lại", "Reset")}</span>
         </div>
       </div>
     </div>
@@ -1764,7 +1764,7 @@ ts.innerHTML = `
       <div class="nv-ts-logo-frame">
         <div class="nv-ts-logo-main">NOVAVERDE</div>
       </div>
-      <div class="nv-ts-logo-sub">EV TYCOON</div>
+      <div class="nv-ts-logo-sub">${tr("ĐẾ CHẾ TRẠM SẠC", "EV TYCOON")}</div>
     </div>
 
     <div class="nv-ts-bottom-zone">
@@ -1773,11 +1773,11 @@ ts.innerHTML = `
       <div class="nv-ts-legal-bar">
         <div class="nv-ts-legal-item" onclick="window.NovaVerdeMobileSDK.toggleTitleConsent('privacy')">
           <span class="nv-ts-diamond ${sdkState.privacyAccepted ? 'checked' : ''}"></span>
-          <span>${tr("I have read and acknowledge the", "I have read and acknowledge the")} <a href="./privacy-policy.html" target="_blank" onclick="event.stopPropagation();" style="color:#6ee7b7; text-decoration:underline; font-weight:900;">PRIVACY POLICY</a></span>
+          <span>${tr("Tôi đã đọc và đồng ý với", "I have read and acknowledge the")} <a href="./privacy-policy.html" target="_blank" onclick="event.stopPropagation();" style="color:#6ee7b7; text-decoration:underline; font-weight:900;">${tr("CHÍNH SÁCH BẢO MẬT", "PRIVACY POLICY")}</a></span>
         </div>
         <div class="nv-ts-legal-item" onclick="window.NovaVerdeMobileSDK.toggleTitleConsent('terms')">
           <span class="nv-ts-diamond ${sdkState.termsAccepted ? 'checked' : ''}"></span>
-          <span>${tr("I have read and agree to the", "I have read and agree to the")} <a href="./privacy-policy.html" target="_blank" onclick="event.stopPropagation();" style="color:#6ee7b7; text-decoration:underline; font-weight:900;">USER AGREEMENT</a></span>
+          <span>${tr("Tôi đã đọc và chấp thuận", "I have read and agree to the")} <a href="./privacy-policy.html" target="_blank" onclick="event.stopPropagation();" style="color:#6ee7b7; text-decoration:underline; font-weight:900;">${tr("ĐIỀU KHOẢN SỬ DỤNG", "USER AGREEMENT")}</a></span>
         </div>
       </div>
     </div>

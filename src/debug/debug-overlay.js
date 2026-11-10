@@ -39,7 +39,7 @@ export function runDevTestAction(action) {
     if (typeof globalThis.refreshAllUI === "function") globalThis.refreshAllUI();
     if (typeof globalThis.saveGameToStorage === "function") globalThis.saveGameToStorage(false);
     if (typeof globalThis.logEvent === "function") {
-      globalThis.logEvent("🛠️ [DEV TEST] Đã cộng +500,000 G$ vào quỹ tiền mặt!");
+      globalThis.logEvent((globalThis.L || (v=>v))("🛠️ [TEST DEV] Đã cộng +500,000 G$ vào quỹ tiền mặt!", "🛠️ [DEV TEST] Added +500,000 G$ to cash balance!"));
     }
   } else if (action === "add_gc") {
     st.greenCoins = (st.greenCoins || 0) + 200; // +200 GC
@@ -48,7 +48,7 @@ export function runDevTestAction(action) {
     if (typeof globalThis.refreshAllUI === "function") globalThis.refreshAllUI();
     if (typeof globalThis.saveGameToStorage === "function") globalThis.saveGameToStorage(false);
     if (typeof globalThis.logEvent === "function") {
-      globalThis.logEvent("🛠️ [DEV TEST] Đã cộng +200 GC vào ví GreenCoin!");
+      globalThis.logEvent((globalThis.L || (v=>v))("🛠️ [TEST DEV] Đã cộng +200 GC vào ví GreenCoin!", "🛠️ [DEV TEST] Added +200 GC to GreenCoin wallet!"));
     }
   } else if (action === "next_hour") {
     st.simMinute = (st.simMinute || 0) + 360;
@@ -86,7 +86,7 @@ export function initDebugTools() {
   if (!togglePillEl && document.body) {
     togglePillEl = document.createElement("button");
     togglePillEl.id = "nv-dev-toggle-pill";
-    togglePillEl.innerHTML = "🛠️ DEV TEST";
+    togglePillEl.innerHTML = (globalThis.L || (v=>v))("🛠️ BẢNG TEST", "🛠️ DEV TEST");
     togglePillEl.style.cssText = [
       "position:fixed",
       "top:76px",
@@ -147,7 +147,8 @@ export function enableDebugOverlay(show) {
       "display:none"
     ].join(";");
 
-    overlayEl.innerHTML = `
+    refreshDebugOverlayLanguage();
+    if (false) overlayEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid #334155;padding-bottom:4px;">
         <span style="color:#facc15;font-weight:900;">🛠️ BẢNG TEST DEV (LOCAL)</span>
         <span style="cursor:pointer;color:#94a3b8;font-weight:900;padding:0 4px;" onclick="document.getElementById('nv-debug-overlay').style.display='none'">✕</span>
@@ -199,11 +200,40 @@ export function tickDebugOverlay() {
     const cam = globalThis.camera || { x: 0, y: 0, zoom: 1 };
     const moneyG = Math.round((st.money || 0) / 1000);
 
+    const Lfn = globalThis.L || ((v) => v);
     statsBoxEl.innerHTML = [
-      `<div>• FPS: <b style="color:#4ade80">${currentFps}</b> | Số dư: <b style="color:#fde047">${moneyG.toLocaleString()} G$</b></div>`,
-      `<div>• Xe đang chạy: <b>${cars}</b> | Đang sạc: <b>${chargingBays}/${totalBays} trụ</b></div>`,
-      `<div>• Lô sở hữu: <b>${ownedCount}/5400</b> | Lô chọn: <b>#${st.selectedLotId || 1}</b></div>`,
+      `<div>• FPS: <b style="color:#4ade80">${currentFps}</b> | ${Lfn("Số dư:", "Cash:")} <b style="color:#fde047">${moneyG.toLocaleString()} G$</b></div>`,
+      `<div>• ${Lfn("Xe đang chạy:", "Road Cars:")} <b>${cars}</b> | ${Lfn("Đang sạc:", "Charging:")} <b>${chargingBays}/${totalBays} ${Lfn("trụ", "bays")}</b></div>`,
+      `<div>• ${Lfn("Lô sở hữu:", "Owned Lots:")} <b>${ownedCount}/5400</b> | ${Lfn("Lô chọn:", "Selected:")} <b>#${st.selectedLotId || 1}</b></div>`,
       `<div>• Camera: <b>x=${Math.round(cam.x)}, y=${Math.round(cam.y)}, z=${(cam.zoom || 1).toFixed(2)}</b></div>`
     ].join("");
   }
 }
+
+export function refreshDebugOverlayLanguage() {
+  const Lfn = globalThis.L || ((v) => v);
+  if (togglePillEl) {
+    togglePillEl.innerHTML = Lfn("🛠️ BẢNG TEST", "🛠️ DEV TEST");
+  }
+  if (overlayEl) {
+    overlayEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;border-bottom:1px solid #334155;padding-bottom:4px;">
+        <span style="color:#facc15;font-weight:900;">🛠️ ${Lfn("BẢNG TEST NHANH (LOCAL)", "LOCAL DEV TEST PANEL")}</span>
+        <span style="cursor:pointer;color:#94a3b8;font-weight:900;padding:0 4px;" onclick="document.getElementById('nv-debug-overlay').style.display='none'">✕</span>
+      </div>
+      <div id="nv-debug-stats-box" style="margin-bottom:8px;color:#38bdf8;font-size:10.5px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+        <button onclick="window.runDevTestAction('offline_1h')" style="background:#059669;color:#fff;border:1px solid #34d399;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">⏱️ ${Lfn("Offline 1 Giờ", "Offline 1h")}</button>
+        <button onclick="window.runDevTestAction('offline_2m')" style="background:#0d9488;color:#fff;border:1px solid #5eead4;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">⏱️ ${Lfn("Offline 2 Phút", "Offline 2m")}</button>
+        <button onclick="window.runDevTestAction('add_money')" style="background:#2563eb;color:#fff;border:1px solid #60a5fa;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">💵 +500,000 G$</button>
+        <button onclick="window.runDevTestAction('add_gc')" style="background:#7c3aed;color:#fff;border:1px solid #c084fc;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🪙 +200 GC</button>
+        <button onclick="window.runDevTestAction('next_hour')" style="background:#d97706;color:#fff;border:1px solid #fcd34d;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">☀️ ${Lfn("Tua +6 Giờ", "Skip +6 Hours")}</button>
+        <button onclick="window.runDevTestAction('next_month')" style="background:#e11d48;color:#fff;border:1px solid #fda4af;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">📅 ${Lfn("Quyết toán Tháng", "Monthly Billing")}</button>
+        <button onclick="window.runDevTestAction('bess_fill')" style="background:#0284c7;color:#fff;border:1px solid #38bdf8;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🔋 ${Lfn("Nạp +250kWh BESS", "Fill +250kWh BESS")}</button>
+        <button onclick="window.runDevTestAction('urban_event')" style="background:#9333ea;color:#fff;border:1px solid #d8b4fe;border-radius:6px;padding:5px 4px;font:800 9.5px system-ui;cursor:pointer;">🎲 ${Lfn("Gọi Sự Kiện A/B", "Trigger A/B Event")}</button>
+      </div>
+    `;
+    statsBoxEl = document.getElementById("nv-debug-stats-box");
+  }
+}
+globalThis.refreshDebugOverlayLanguage = refreshDebugOverlayLanguage;

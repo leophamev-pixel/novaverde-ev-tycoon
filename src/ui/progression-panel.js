@@ -175,7 +175,7 @@ export function renderStage2LotProgressionBox(lot) {
             ${
               techLvl < 3
                 ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'tech')">${Lfn("Đào tạo", "Train")} (${fmt(techNextCost)})</button>`
-                : `<span style="font-size:8px;font-weight:900;color:#059669;">✓ Cấp Tối Đa</span>`
+                : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
 
@@ -185,7 +185,7 @@ export function renderStage2LotProgressionBox(lot) {
             ${
               mgrLvl < 3
                 ? `<button class="u-btn" style="width:100%;font-size:8px;padding:3px;" onclick="hireOrUpgradeLotStaff(${lot.id}, 'manager')">${Lfn("Bổ nhiệm", "Appoint")} (${fmt(mgrNextCost)})</button>`
-                : `<span style="font-size:8px;font-weight:900;color:#059669;">✓ Cấp Tối Đa</span>`
+                : `<span style="font-size:8px;font-weight:900;color:#059669;">${Lfn("✓ Cấp Tối Đa", "✓ Max Level")}</span>`
             }
           </div>
         </div>
@@ -255,10 +255,10 @@ export function renderStage2UnlockTreeBox() {
       <div style="margin-top:7px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:8px;color:#334155;">
         <b>📊 ${Lfn("BẢNG SO SÁNH ROI TRỤ SẠC & TIỆN ÍCH (BƯỚC 2.1):", "CHARGER & AMENITY ROI BENCHMARK:")}</b>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:3px;">
-          <div>• AC 11kW: ~180 G$/ph (~55p hoàn vốn)</div>
-          <div>• DC 30kW: ~490 G$/ph (+172% tốc độ)</div>
-          <div>• DC 60kW: ~980 G$/ph (~56p hoàn vốn)</div>
-          <div>• Siêu Trụ 120kW: ~1,960 G$/ph (~48p hoàn vốn)</div>
+          <div>${Lfn("• AC 11kW: ~180 G$/ph (~55p hoàn vốn)", "• AC 11kW: ~180 G$/min (~55m payback)")}</div>
+          <div>${Lfn("• DC 30kW: ~490 G$/ph (+172% tốc độ)", "• DC 30kW: ~490 G$/min (+172% speed)")}</div>
+          <div>${Lfn("• DC 60kW: ~980 G$/ph (~56p hoàn vốn)", "• DC 60kW: ~980 G$/min (~56m payback)")}</div>
+          <div>${Lfn("• Siêu Trụ 120kW: ~1,960 G$/ph (~48p hoàn vốn)", "• 120kW Supercharger: ~1,960 G$/min (~48m payback)")}</div>
         </div>
       </div>
     </div>

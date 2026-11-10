@@ -78,7 +78,7 @@ export function computeEmpireTelemetrySnapshot() {
       icon: "🔋",
       text: Lfn(
         "Pin lưu trữ BESS đang cạn (0 kWh) — nạp điện vào Pin BESS sẽ giúp tăng ngay +35% biên lợi nhuận sạc!",
-        "BESS Battery Storage is empty — nạp grid power into BESS to boost charging profit margin by +35%!"
+        "BESS Battery Storage is empty — store grid power into BESS to boost charging profit margin by +35%!"
       )
     });
   }
@@ -101,7 +101,7 @@ export function computeEmpireTelemetrySnapshot() {
       icon: "☕",
       text: Lfn(
         "Chưa mở Tiện ích phụ trợ — xây Quầy Trà Đá hoặc Quán Café để thu thêm +12K..+61K G$ mỗi lượt xe sạc xong.",
-        "No station amenities built — open an Iced Tea Kiosk or Café to earn +12K..+61K G$ per charged car."
+        "No station amenities built — open an Iced Tea Kiosk or Coffee Roastery to earn +12K..+61K G$ per charged car."
       )
     });
   }
@@ -152,7 +152,7 @@ export function renderStage3AnalyticsAndAudioBox() {
           📊 ${Lfn("TRUNG TÂM PHÂN TÍCH VẬN HÀNH & ÂM THANH (GIAI ĐOẠN 3)", "TELEMETRY, BOTTLENECK & AUDIO CENTER (STAGE 3)")}
         </span>
         <span style="font-size:8px;font-weight:800;color:#059669;background:#dcfce7;padding:2px 6px;border-radius:99px;">
-          ⚡ Render ${perf.avgFrameTimeMs}ms • Cache ${perf.cacheHitRatePct}%
+          ⚡ ${Lfn(`Vẽ ${perf.avgFrameTimeMs}ms • Bộ đệm ${perf.cacheHitRatePct}%`, `Render ${perf.avgFrameTimeMs}ms • Cache ${perf.cacheHitRatePct}%`)}
         </span>
       </div>
 
@@ -167,28 +167,28 @@ export function renderStage3AnalyticsAndAudioBox() {
         </div>
         <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:4px;">
           <div style="font-size:7.8px;color:#64748b;font-weight:800;">${Lfn("CẤP TIỆN ÍCH", "AMENITY LEVELS")}</div>
-          <div style="font-size:11px;font-weight:900;color:#d97706;">${snap.totalAmenityLevels} Lv</div>
+          <div style="font-size:11px;font-weight:900;color:#d97706;">${snap.totalAmenityLevels} ${Lfn("Cấp", "Lv")}</div>
         </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:7px;">
-        <div style="font-size:8.5px;font-weight:900;color:#334155;">🔍 ${Lfn("Chẩn đoán Điểm nghẽn Trạm sạc (AI Diagnostics):", "Station Bottleneck Diagnostics:")}</div>
+        <div style="font-size:8.5px;font-weight:900;color:#334155;">🔍 ${Lfn("Chẩn đoán Điểm nghẽn Trạm sạc (AI):", "Station Bottleneck Diagnostics (AI):")}</div>
         ${bottleneckHtml}
       </div>
 
       <div style="border-top:1px dashed #cbd5e1;padding-top:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
         <div style="display:flex;align-items:center;gap:5px;">
           <button class="sheet-mini-btn" onclick="toggleBgmMusic()">
-            ${aud.bgmEnabled ? "🎵 BGM Lo-fi: ON" : "🎵 BGM Lo-fi: OFF"}
+            ${aud.bgmEnabled ? Lfn("🎵 Nhạc nền: BẬT", "🎵 BGM Lo-fi: ON") : Lfn("🎵 Nhạc nền: TẮT", "🎵 BGM Lo-fi: OFF")}
           </button>
           <button class="sheet-mini-btn" onclick="toggleSoundEffects()">
-            ${aud.sfxEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF"}
+            ${aud.sfxEnabled ? Lfn("🔊 Hiệu ứng: BẬT", "🔊 SFX: ON") : Lfn("🔇 Hiệu ứng: TẮT", "🔇 SFX: OFF")}
           </button>
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:8px;font-weight:800;color:#475569;">
-          <span>🔊 SFX ${Math.round((aud.sfxVolume || 0.8) * 100)}%</span>
+          <span>🔊 ${Lfn("Hiệu ứng", "SFX")} ${Math.round((aud.sfxVolume || 0.8) * 100)}%</span>
           <input type="range" min="0" max="100" value="${Math.round((aud.sfxVolume || 0.8) * 100)}" style="width:55px;height:10px;" onchange="setAudioChannelVolume('sfx', this.value)" />
-          <span>🎵 BGM ${Math.round((aud.bgmVolume || 0.45) * 100)}%</span>
+          <span>🎵 ${Lfn("Nhạc nền", "BGM")} ${Math.round((aud.bgmVolume || 0.45) * 100)}%</span>
           <input type="range" min="0" max="100" value="${Math.round((aud.bgmVolume || 0.45) * 100)}" style="width:55px;height:10px;" onchange="setAudioChannelVolume('bgm', this.value)" />
         </div>
       </div>

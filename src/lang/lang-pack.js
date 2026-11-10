@@ -8,6 +8,12 @@
 // =========================================================================================
 window.LANG_PACK = {
   vi: {
+    pageTitle: "Đại Đô Thị NovaVerde — Đế Chế Trạm Sạc Xe Điện 3D (5.400 Lô • 12 Quận • 36 Phường)",
+    appTitle: "Đại Đô Thị NovaVerde",
+    gcSubLabel: "Công cụ•Skin",
+    rewardedAdHdr: "🎬 XEM VIDEO TÀI TRỢ NHẬN THƯỞNG",
+    saveStatusAuto: "🟢 Trạng thái: Đang tự động lưu vào bộ nhớ máy.",
+    saveJsonPlaceholder: "Mã JSON tiến độ chơi...",
     cityName: "Đại Đô Thị NovaVerde",
     citySub: "Thành Phố Xanh Ánh Dương (5.400 Lô • 12 Quận • 36 Phường)",
     riverName: "Sông Ngân Hà",
@@ -29,6 +35,12 @@ window.LANG_PACK = {
     dockFin: "Thuế & Sổ"
   },
   en: {
+    pageTitle: "NovaVerde Metropolis EV Tycoon 3D — 5,400 Lots (12 Districts • 36 Wards), Land Auction & Leaderboard",
+    appTitle: "NovaVerde EV Tycoon",
+    gcSubLabel: "Tools•Skins",
+    rewardedAdHdr: "🎬 WATCH SPONSORED VIDEO FOR REWARD",
+    saveStatusAuto: "🟢 Status: Auto-saving to local storage.",
+    saveJsonPlaceholder: "Paste Save JSON string here...",
     cityName: "NovaVerde Metropolis",
     citySub: "Solaris Green Megacity (5,400 Lots • 12 Districts • 36 Wards)",
     riverName: "Silverstar River",
@@ -80,6 +92,16 @@ export function getItemDesc(obj) {
 
 export function applyLanguageStaticDOM() {
   const en = isEn();
+  if (typeof document !== "undefined") {
+    document.title = tPack("pageTitle");
+    if (document.documentElement) {
+      document.documentElement.lang = en ? "en" : "vi";
+    }
+    const appleMeta = document.querySelector && document.querySelector("meta[name=\"apple-mobile-web-app-title\"]");
+    if (appleMeta && appleMeta.setAttribute) {
+      appleMeta.setAttribute("content", tPack("appTitle"));
+    }
+  }
   const setTxt = (id, vi, enStr) => {
     const el = document.getElementById(id);
     if (el) el.textContent = en ? enStr : vi;
@@ -90,7 +112,7 @@ export function applyLanguageStaticDOM() {
   };
 
   setTxt("btn-toggle-lang", "🇻🇳", "🇬🇧");
-  setTxt("lang-pop-btn", "🌐 Ngôn ngữ: Tiếng Việt (Bấm đổi sang EN)", "🌐 Language: English (Tap to switch to VI)");
+  setTxt("lang-pop-btn", "🌐 Ngôn ngữ: Tiếng Việt (Bấm đổi sang Tiếng Anh)", "🌐 Language: English (Tap to switch to Vietnamese)");
   setTxt(
     "sfx-pop-btn",
     (typeof sfxEnabled === "undefined" || sfxEnabled) ? "🔊 Âm thanh: Bật" : "🔇 Âm thanh: Tắt",
@@ -100,7 +122,7 @@ export function applyLanguageStaticDOM() {
   setTxt("map-pop-btn", "🗺️ Bản Đồ 12 Quận", "🗺️ 12-District Map");
   setTxt("search-5400-pop-btn", "🔍 Tìm Lô #1..5400", "🔍 Find Lot #1..5400");
   setTxt("locate-pop-btn", "🎯 Tới Trạm Của Tôi", "🎯 Locate My Station");
-  setTxt("open-gc-shop-pop-btn", "🪙 Cửa Hàng GreenCoin: Tools • Vật Phẩm • Skin 3D", "🪙 GreenCoin Shop: VIP Tools • Items • 3D Skins");
+  setTxt("open-gc-shop-pop-btn", "🪙 Cửa Hàng GreenCoin: Công Cụ • Vật Phẩm • Skin 3D", "🪙 GreenCoin Shop: VIP Tools • Items • 3D Skins");
   setTxt("hud-prev-ward-btn", "◀", "◀");
   setTxt("hud-next-ward-btn", "▶", "▶");
   setTxt("radar-hdr-lbl", "🧭 BẢN ĐỒ RADAR ĐÔ THỊ", "🧭 URBAN RADAR MAP");
@@ -116,10 +138,10 @@ export function applyLanguageStaticDOM() {
     "<span>🟢 Trạm tôi</span><span>🔴 Đối thủ</span><span>🔨 Đấu giá</span><span>🟡 Đang chọn</span><span>🌊 Sông/Hồ</span>",
     "<span>🟢 My Lot</span><span>🔴 Rival</span><span>🔨 Auction</span><span>🟡 Selected</span><span>🌊 Water</span>"
   );
-  setTxt("tools-pop-title", "⚙️ CÀI ĐẶT & ĐIỀU KHIỂN (SETTINGS)", "⚙️ SETTINGS & QUICK CONTROLS");
+  setTxt("tools-pop-title", "⚙️ CÀI ĐẶT & ĐIỀU KHIỂN NHANH", "⚙️ SETTINGS & QUICK CONTROLS");
   setHtml(
     "tools-pop-desc",
-    "💵 <b>GreenDollar (G$):</b> Tiền kiếm được từ sạc điện, tiện ích & thu phạt.<br/>🪙 <b>GreenCoin (GC):</b> Tiền nạp để dùng VIP Tools, mua Vật phẩm & Skin 3D!",
+    "💵 <b>GreenDollar (G$):</b> Tiền kiếm được từ sạc điện, tiện ích & thu phạt.<br/>🪙 <b>GreenCoin (GC):</b> Tiền nạp để dùng Công cụ VIP, mua Vật phẩm & Skin 3D!",
     "💵 <b>GreenDollar (G$):</b> Earned currency from EV charging, amenities & fines.<br/>🪙 <b>GreenCoin (GC):</b> Top-up currency for VIP Tools, Boosters & 3D Skins!"
   );
 
@@ -179,11 +201,11 @@ export function applyLanguageStaticDOM() {
   setTxt("fin-lbl-tax", "Tổng Thuê & Thuế đã nộp (G$)", "Total Rent & Taxes Paid (G$)");
   setTxt("fin-lbl-debt", "Tổng Dư Nợ (Gốc + Lãi G$)", "Total Overdue Debt (G$)");
 
-  setTxt("dock-lbl-lot", "Đất & Trụ", "Land & Bays");
-  setTxt("dock-lbl-am", "Tiện Ích", "Amenities");
-  setTxt("dock-lbl-all", "5.400 Lô (12Q)", "5,400 Lots");
-  setTxt("dock-lbl-mp", "MP & Đấu Giá", "MP & Auction");
-  setTxt("dock-lbl-fin", "Thuế & Sổ", "Tax & Ledger");
+  setTxt("dock-lbl-lot", tPack("dockLot"), tPack("dockLot"));
+  setTxt("dock-lbl-am", tPack("dockAm"), tPack("dockAm"));
+  setTxt("dock-lbl-all", tPack("dockAll"), tPack("dockAll"));
+  setTxt("dock-lbl-mp", tPack("dockMp"), tPack("dockMp"));
+  setTxt("dock-lbl-fin", tPack("dockFin"), tPack("dockFin"));
 
   setTxt("report-modal-title", "📡 BÁO CÁO VẬN HÀNH & QUYẾT TOÁN", "📡 OPERATIONS & TAX SETTLEMENT REPORT");
   setTxt("offline-close-btn", "Đóng", "Close");
@@ -201,7 +223,19 @@ export function applyLanguageStaticDOM() {
   setTxt("reset-prompt-lbl", "Muốn chơi lại từ đầu (65,000 G$ & 250 GC)?", "Start a fresh game (65,000 G$ & 250 GC)?");
   setTxt("reset-game-btn", "🔄 Reset Game", "🔄 Reset Game");
   setTxt("metro-modal-hdr-title", "🗺️ BẢN ĐỒ 12 QUẬN ĐẠI ĐÔ THỊ NOVAVERDE (5.400 LÔ)", "🗺️ NOVAVERDE 12 DISTRICTS MAP (5,400 LOTS)");
-  setTxt("gc-shop-modal-hdr-title", "🪙 CỬA HÀNG GREENCOIN: TOOLS • VẬT PHẨM • SKIN 3D", "🪙 GREENCOIN SHOP: VIP TOOLS • ITEMS • 3D SKINS");
+  setTxt("gc-shop-modal-hdr-title", "🪙 CỬA HÀNG GREENCOIN: CÔNG CỤ • VẬT PHẨM • SKIN 3D", "🪙 GREENCOIN SHOP: VIP TOOLS • ITEMS • 3D SKINS");
+  setTxt("rewarded-ad-modal-hdr", tPack("rewardedAdHdr"), tPack("rewardedAdHdr"));
+  const saveBox = document.getElementById("save-json-box");
+  if (saveBox) saveBox.placeholder = tPack("saveJsonPlaceholder");
+  const prevBtn = document.getElementById("hud-prev-ward-btn");
+  if (prevBtn) prevBtn.title = en ? "Jump to previous adjacent Ward" : "Bay sang Phường liền kề phía trước";
+  const nextBtn = document.getElementById("hud-next-ward-btn");
+  if (nextBtn) nextBtn.title = en ? "Jump to next adjacent Ward" : "Bay sang Phường liền kề tiếp theo";
+  const hideBtn = document.getElementById("drawer-hide-btn");
+  if (hideBtn) hideBtn.title = en ? "Minimize panel to view full 3D map" : "Thu gọn bảng xuống để ngắm toàn cảnh Bản đồ 3D";
+  const miniCvs = document.getElementById("minimapCanvas");
+  if (miniCvs) miniCvs.title = en ? "Press and drag smoothly on the Radar disc to pan across the city" : "Nhấn giữ và kéo mượt mà trên mặt đĩa Radar để lướt khắp thành phố";
+  if (typeof globalThis.refreshDebugOverlayLanguage === "function") globalThis.refreshDebugOverlayLanguage();
 
   updateGreenCoinHUD();
   if (typeof applySheetModeUI === "function") applySheetModeUI();

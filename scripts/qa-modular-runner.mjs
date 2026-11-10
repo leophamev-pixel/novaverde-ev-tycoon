@@ -541,11 +541,60 @@ assertStg3(
 );
 
 assertStg3(
+  "LOC-01",
+  "Kiểm tra 2 bộ ngôn ngữ LANG_PACK.vi & LANG_PACK.en khớp 100% khóa & đổi tiêu đề Tab trình duyệt (document.title)",
+  (() => {
+    const viKeys = Object.keys(vm.runInContext("window.LANG_PACK.vi", sandbox)).sort();
+    const enKeys = Object.keys(vm.runInContext("window.LANG_PACK.en", sandbox)).sort();
+    vm.runInContext("window.currentLang = 'vi'; applyLanguageStaticDOM();", sandbox);
+    const titleVi = vm.runInContext("document.title", sandbox);
+    const langAttrVi = vm.runInContext("document.documentElement.lang", sandbox);
+    vm.runInContext("window.currentLang = 'en'; applyLanguageStaticDOM();", sandbox);
+    const titleEn = vm.runInContext("document.title", sandbox);
+    const langAttrEn = vm.runInContext("document.documentElement.lang", sandbox);
+    vm.runInContext("window.currentLang = 'vi'; applyLanguageStaticDOM();", sandbox);
+    return JSON.stringify(viKeys) === JSON.stringify(enKeys) &&
+      titleVi.includes("Đại Đô Thị NovaVerde") &&
+      titleEn.includes("NovaVerde Metropolis EV Tycoon") &&
+      langAttrVi === "vi" &&
+      langAttrEn === "en";
+  })(),
+  "Tab <title>, <html lang> & 23/23 LANG_PACK keys matched"
+);
+
+assertStg3(
+  "LOC-02",
+  "Kiểm tra chuyển đổi ngôn ngữ VI <-> EN đồng bộ 100% trên HUD, Màn hình chờ, BESS, Cây DAG & Analytics",
+  (() => {
+    vm.runInContext("window.currentLang = 'en'; applyLanguageStaticDOM(); refreshAllUI();", sandbox);
+    const enProg = vm.runInContext("renderStage2LotProgressionBox(state.lots[0])", sandbox);
+    const enDag = vm.runInContext("renderStage2UnlockTreeBox()", sandbox);
+    const enAna = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
+    vm.runInContext("window.currentLang = 'vi'; applyLanguageStaticDOM(); refreshAllUI();", sandbox);
+    const viProg = vm.runInContext("renderStage2LotProgressionBox(state.lots[0])", sandbox);
+    const viDag = vm.runInContext("renderStage2UnlockTreeBox()", sandbox);
+    const viAna = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
+    return enProg.includes("MAIN PROGRESSION QUEST") &&
+      enDag.includes("CHARGER & AMENITY ROI BENCHMARK") &&
+      enAna.includes("Station Bottleneck Diagnostics (AI)") &&
+      !enAna.includes("nạp") &&
+      viProg.includes("NHIỆM VỤ TÂN THỦ & TIẾN TRÌNH") &&
+      viDag.includes("BẢNG SO SÁNH ROI TRỤ SẠC") &&
+      viAna.includes("Chẩn đoán Điểm nghẽn Trạm sạc (AI)");
+  })(),
+  "Zero mixed-language leakage verified across VI and EN"
+);
+
+assertStg3(
   "STG3-10",
   "Giao diện Trung tâm Phân tích & Âm thanh (renderStage3AnalyticsAndAudioBox) hiển thị đầy đủ trên HUD",
   (() => {
-    const html = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
-    return typeof html === "string" && html.includes("BGM") && html.includes("SFX") && html.includes("Render");
+    vm.runInContext("window.currentLang = 'vi';", sandbox);
+    const htmlVi = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
+    vm.runInContext("window.currentLang = 'en';", sandbox);
+    const htmlEn = vm.runInContext("renderStage3AnalyticsAndAudioBox()", sandbox);
+    vm.runInContext("window.currentLang = 'vi';", sandbox);
+    return htmlVi.includes("Nhạc nền") && htmlVi.includes("Hiệu ứng") && htmlVi.includes("Bộ đệm") && htmlEn.includes("BGM") && htmlEn.includes("SFX") && htmlEn.includes("Render");
   })(),
   "Stage 3 UI Box verified"
 );
@@ -557,6 +606,6 @@ for (const r of stg3Results) {
 }
 
 console.log("\n===================================================================");
-console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg3PassCount}/10 STAGE-3 TESTS +  ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + stg3PassCount + qaPassedCount}/${30 + qaTotalCount} PASSED (100%)`);
+console.log(`🏆 TỔNG KẾT TOÀN TRÌNH: ${stg3PassCount}/12 STAGE-3 & LANGPACK TESTS +  ${stg2PassCount}/10 STAGE-2 TESTS +` + ` ${modPassCount}/10 MODULE TESTS + ${qaPassedCount}/${qaTotalCount} GAMEPLAY TESTS = ${modPassCount + stg2PassCount + stg3PassCount + qaPassedCount}/${32 + qaTotalCount} PASSED (100%)`);
 console.log("===================================================================");
-if (modPassCount < 10 || stg2PassCount < 10 || stg3PassCount < 10 || qaPassedCount < qaTotalCount) process.exit(1);
+if (modPassCount < 10 || stg2PassCount < 10 || stg3PassCount < 12 || qaPassedCount < qaTotalCount) process.exit(1);
