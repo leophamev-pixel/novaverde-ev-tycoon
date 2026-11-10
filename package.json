@@ -1,0 +1,16 @@
+{
+  "name": "novaverde-ev-tycoon-modular",
+  "version": "3.0.0",
+  "description": "NovaVerde: EV Charging & Urban Real Estate Tycoon (Modular Architecture Standard)",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "start": "node scripts/dev-server.mjs",
+    "build": "node scripts/build-bundle.mjs",
+    "build:web": "node scripts/build-bundle.mjs",
+    "test": "node scripts/qa-modular-runner.mjs"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

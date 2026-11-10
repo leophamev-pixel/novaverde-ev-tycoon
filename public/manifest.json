@@ -1,0 +1,24 @@
+{
+  "name": "Đại Đô Thị NovaVerde EV Tycoon 3D",
+  "short_name": "NovaVerde EV",
+  "description": "Game Mobile Quản Lý Đế Chế Trạm Sạc Xe Điện 3D Isometric Đại Đô Thị NovaVerde - 5.400 Lô Đất, Đua Top BXH & Sàn Đấu Giá BĐS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%230f172a'/%3E%3Ccircle cx='96' cy='96' r='72' fill='%2310b981' stroke='%23fef08a' stroke-width='8'/%3E%3Cpath d='M106 42L62 104h32l-8 46 44-62H98z' fill='%23fef08a'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%230f172a'/%3E%3Ccircle cx='256' cy='256' r='196' fill='%2310b981' stroke='%23fef08a' stroke-width='18'/%3E%3Cpath d='M284 112L164 278h86l-22 122 120-166h-86z' fill='%23fef08a'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="NovaVerde EV Tycoon" />
+  <link rel="manifest" href="./manifest.json" />
+  <title>Đại Đô Thị NovaVerde EV Tycoon 3D (v2 Leaderboard & Mobile) - 5.400 Lô Đất (12 Quận • 36 Phường), Sàn Đấu Giá & Bảng Xếp Hạng</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <div id="mobile-shell">
+    <!-- FULL-SCREEN ISOMETRIC 2.5D CITY BUILDER MAP CANVAS -->
+    <div class="canvas-container" id="canvas-wrap">
+      <canvas id="hanoiCanvas"></canvas>
+    </div>
+
+    <!-- MINIMAL FLOATING TOP HUD (2 GỌN HÀNG: KINH TẾ + ĐỊNH VỊ & TỐC ĐỘ 1 CHẠM + 3 NÚT 🎯🧭⚙️) -->
+    <div class="floating-top-hud" style="padding-top: env(safe-area-inset-top, 0px); gap: 5px;">
+      <!-- HÀNG 1: HỒ SƠ THỊ PHẦN + GREendoLLAR (G$) + GREENCOIN (GC) -->
+      <div class="hud-top-bar">
+        <div class="player-pill" onclick="openDockTab('tab-rivals', document.getElementById('btn-tab-rivals'))" title="Bấm để mở Trung Tâm Multiplayer, Đấu Giá Sổ Đỏ & Bảng Xếp Hạng Server" style="padding: 3px 8px 3px 4px; gap: 5px;">
+          <div class="avatar-circle" style="width:24px; height:24px; font-size:12px;">
+            ⚡
+            <span class="online-dot" id="save-dot"></span>
+          </div>
+          <div class="p-meta">
+            <span class="p-name" style="font-size:9.5px;"><span id="mp-conn-badge">🟢 MP</span> • <span id="owned-lots-lbl">1/5.400 Lô</span></span>
+            <span class="p-sub" id="market-share-pill" style="font-size:8.2px;">Q1 • Thị phần: 35%</span>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:4px; pointer-events:auto;">
+          <div class="cash-pill" title="GreenDollar (G$) — Tiền kiếm được từ sạc điện & tiện ích" style="padding: 3px 5px 3px 8px;">
+            <div class="cash-info">
+              <span class="cash-main" id="money-display" style="font-size:10.5px;">💵 65,000 G$</span>
+              <span class="cash-rate" id="net-rate-lbl">+0 G$/ph</span>
+            </div>
+            <button class="plus-cash-btn" onclick="openGreenCoinShopModal()" title="Mở Cửa Hàng Nhận Thưởng Quảng Cáo & Quy Đổi Vốn">➕</button>
+          </div>
+
+          <div class="gc-pill" onclick="openGreenCoinShopModal()" title="GreenCoin (GC) — Tiền nạp để dùng VIP Tools, mua Vật phẩm & Skin Trạm Sạc 3D" style="padding: 3px 5px 3px 7px;">
+            <div class="cash-info">
+              <span class="gc-main" id="greencoin-display" style="font-size:10.5px;">🪙 250 GC</span>
+              <span class="cash-rate" id="gc-sub-lbl" style="color:#fcd34d;">🛍️ Tools•Skin</span>
+            </div>
+            <button class="plus-cash-btn" onclick="event.stopPropagation(); openGreenCoinShopModal();" title="Mở Cửa Hàng Nạp GreenCoin, Tools, Vật Phẩm & Skin">🛍️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HÀNG 2: ĐỊNH VỊ QUẬN/PHƯỜNG + ĐỒNG HỒ & NÚT TỐC ĐỘ [1x ▸] + 3 NÚT TRÒN (🎯 TRẠM CỦA TÔI • 🧭 RADAR • ⚙️ SETTING) -->
+      <div class="hud-sub-bar" style="gap:4px;">
+        <!-- Cụm Trái: Chọn Phường / Mở Bản Đồ 12 Quận -->
+        <div style="pointer-events:auto; flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:3px; background:rgba(15, 23, 42, 0.9); backdrop-filter:blur(8px); border:1.8px solid rgba(251, 191, 36, 0.85); border-radius:99px; padding:3px 5px; box-shadow:0 3px 10px rgba(0,0,0,0.28);">
+          <button id="hud-prev-ward-btn" onclick="stepAdjacentWardSector(-1)" style="background:#334155; color:#fde047; border:1px solid #64748b; border-radius:99px; padding:1.5px 5.5px; font-size:8.4px; font-weight:900; cursor:pointer; flex-shrink:0;" title="Bay sang Phường liền kề phía trước">◀</button>
+          <div onclick="openWorldMetroMapModal()" style="flex:1; min-width:0; text-align:center; cursor:pointer; font-size:8.6px; font-weight:900; color:#fef08a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Bấm để mở Bản Đồ Vùng 12 Quận • 36 Phường • 5.400 Lô Đất">
+            🗺️ <span id="hud-ward-navigator-lbl">Q1. Hoàng Kim • Kim Ngân</span> ▾
+          </div>
+          <button id="hud-next-ward-btn" onclick="stepAdjacentWardSector(1)" style="background:#334155; color:#fde047; border:1px solid #64748b; border-radius:99px; padding:1.5px 5.5px; font-size:8.4px; font-weight:900; cursor:pointer; flex-shrink:0;" title="Bay sang Phường liền kề tiếp theo">▶</button>
+        </div>
+
+        <!-- Cụm Giữa: Đồng hồ Thời Gian Thực 1x Cố Định (Chống gian lận tua thời gian) -->
+        <div class="time-speed-pill" style="flex-shrink:0; padding:2.5px 6px 2.5px 7px; gap:3.5px;">
+          <span id="day-display" style="font-size:8.4px;">T2•Ng1</span>
+          <span style="opacity:0.35">|</span>
+          <span id="clock-display" style="color:#0284c7; font-size:8.6px; font-weight:900;">08:00 ☀️</span>
+          <span class="spd-chip active" id="hud-realtime-badge" title="Tốc độ 1x Cố định theo Thời gian thực (Chống gian lận Đua Top)" style="padding:1.5px 5px; font-size:8px; cursor:default;">🔒 1x</span>
+        </div>
+
+        <!-- Cụm Phải: Chỉ 3 nút tròn quan trọng nhất (🎯 Định vị Trạm của tôi • 🧭 Radar Minimap • ⚙️ Setting) -->
+        <div class="hud-icon-cluster" style="flex-shrink:0; gap:4px;">
+          <button class="icon-round-btn active-tool" id="btn-locate-my-lot" onclick="locateMyNextChargingLot()" title="Định vị & nhảy tuần tự qua các Lô Trạm Sạc của tôi" style="width:30px; height:30px; background:linear-gradient(180deg, #fde047, #f59e0b); border-color:#451a03;">
+            🎯
+            <span id="my-lot-count-badge" style="position:absolute; bottom:-3px; right:-3px; background:#047857; color:#fff; font-size:7.6px; font-weight:900; padding:0 3.8px; border-radius:99px; border:1.2px solid #fef08a; line-height:1.25;">1</span>
+          </button>
+          <button class="icon-round-btn" id="btn-toggle-radar" onclick="toggleRadarMinimap()" title="Bật/Tắt Radar Minimap Toàn Cảnh 5.400 Lô (36 Phường)" style="width:30px; height:30px;">🧭</button>
+          <button class="icon-round-btn" id="btn-toggle-tools" onclick="toggleToolsPopover()" title="Mở Cài Đặt (Ngôn ngữ, Âm thanh, Góc nhìn, Lưu game & Công cụ)" style="width:30px; height:30px;">
+            ⚙️
+            <span class="badge-dot-alert" id="debt-dot-alert"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLAPSIBLE CIRCULAR RADAR MINIMAP 360° (KÉO MƯỢT MÀ LIÊN TỤC 60 FPS + 2 TẦM NHÌN + NÚT ⛶ PHÓNG TO) -->
+    <div class="minimap-floating-card" id="radar-card" style="top: 84px;">
+      <div class="minimap-hdr" style="width:100%;">
+        <span id="radar-hdr-lbl">🧭 RADAR ĐÔ THỊ 360°</span>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <button class="mini-ctrl-btn" id="mini-expand-btn" onclick="toggleMinimapExpand()" title="Phóng to hoặc thu gọn Đĩa Tròn Radar">⛶ Phóng to</button>
+          <span style="cursor:pointer; color:#f8fafc; font-size:11px; padding:0 3px;" onclick="toggleRadarMinimap()">✕</span>
+        </div>
+      </div>
+      <div class="minimap-mode-tabs" style="width:100%;">
+        <button class="mini-mode-tab active" id="mini-mode-world-btn" onclick="setMinimapViewMode('world')">🌐 12 Quận (36P)</button>
+        <button class="mini-mode-tab" id="mini-mode-ward-btn" onclick="setMinimapViewMode('ward')">🔍 Chi Tiết Phố</button>
+      </div>
+      <canvas id="minimapCanvas" width="420" height="420" title="Nhấn giữ và kéo mượt mà trên mặt đĩa Radar để lướt khắp thành phố"></canvas>
+      <div class="minimap-legend" id="mini-legend-bar" style="width:100%;">
+        <span>🟢 Trạm tôi</span><span>🔴 Đối thủ</span><span>🔨 Đấu giá</span><span>🟡 Đang chọn</span><span>🌊 Sông/Hồ</span>
+      </div>
+      <div id="quick-lot-strip" style="display:none;"></div>
+    </div>
+
+    <!-- COLLAPSIBLE SETTINGS & QUICK CONTROLS POPOVER (GOM NGÔN NGỮ, ÂM THANH, GÓC NHÌN, LƯU GAME & BẢN TIN TUẦN) -->
+    <div class="floating-popover" id="tools-popover" style="top: 84px; width: 262px;">
+      <div class="popover-title">
+        <span id="tools-pop-title">⚙️ CÀI ĐẶT & ĐIỀU KHIỂN (SETTINGS)</span>
+        <span style="cursor:pointer; font-size:12px;" onclick="toggleToolsPopover()">✕</span>
+      </div>
+
+      <!-- Bản tin Nhịp sống Thủ đô Thứ 2 -> Chủ Nhật & Tỷ lệ EV/Xăng (Đã chuyển vào Setting để HUD ngoài thông thoáng) -->
+      <div id="hud-weekly-timeline-bar" style="background:#fef3c7; border:1.5px solid var(--wood-border); border-radius:9px; padding:4px 7px; font-size:8.1px; font-weight:800; color:#291507; display:flex; flex-direction:column; gap:2px;">
+        <span id="hud-weekday-phase-lbl" style="color:#b45309; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🌅 Thứ 2 • Cao điểm Sáng: Vượt cầu vào Nội Đô</span>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span id="hud-fleet-mix-lbl" style="color:#047857;">⚡35% Điện • ⛽65% Xăng</span>
+          <span id="calendar-display" style="color:#0369a1; font-weight:900;">T1•N1</span>
+        </div>
+      </div>
+
+      <!-- Tốc độ Server khóa cố định ở mức 1x Thời gian thực để chống gian lận Bảng Xếp Hạng -->
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; background:#ecfdf5; border:1.4px solid #047857; border-radius:8px; padding:4px 7px;">
+        <span id="setting-speed-lock-lbl" style="font-size:8.1px; font-weight:900; color:#065f46;">🔒 Tốc độ Server: 1x Cố Định (Chống gian lận BXH)</span>
+      </div>
+
+      <button class="pop-btn blue" onclick="toggleLanguage()" id="lang-pop-btn">
+        🌐 Ngôn ngữ: 🇻🇳 Tiếng Việt ⇄ 🇬🇧 English
+      </button>
+
+      <div class="popover-grid">
+        <button class="pop-btn green" onclick="toggleSoundEffects()" id="sfx-pop-btn">🔊 Âm thanh: Bật</button>
+        <button class="pop-btn blue" onclick="toggleIsometricProjection()" id="iso-mode-pop-btn">💎 Góc: Iso 3D</button>
+        <div class="pop-btn" id="weather-btn" style="cursor:default; box-shadow:none; background:#fef9c3;">☀️ Tự động</div>
+        <button class="pop-btn green" onclick="toggleToolsPopover(); openSaveModal();" id="save-pop-btn">💾 Lưu & Cloud</button>
+        <button class="pop-btn blue" onclick="toggleToolsPopover(); openWorldMetroMapModal();" id="map-pop-btn">🗺️ Bản Đồ 12 Quận</button>
+        <button class="pop-btn" onclick="toggleToolsPopover(); openDockTab('tab-all-lots', document.getElementById('btn-tab-all')); state.sheetMode='expanded'; applySheetModeUI();" id="search-5400-pop-btn">🔍 Tìm Lô #1..5400</button>
+        <button class="pop-btn" onclick="stepZoom(-0.18)" id="zoom-out-pop-btn">🔍 Thu nhỏ (-)</button>
+        <button class="pop-btn" onclick="stepZoom(0.18)" id="zoom-in-pop-btn">🔍 Phóng to (+)</button>
+      </div>
+
+      <button class="pop-btn" onclick="toggleToolsPopover(); locateMyNextChargingLot();" id="locate-pop-btn" style="background:#fde68a; border-color:#92400e;">
+        🎯 Tới Trạm Của Tôi
+      </button>
+
+      <button class="pop-btn purple" onclick="toggleToolsPopover(); openGreenCoinShopModal();" id="open-gc-shop-pop-btn">
+        🪙 Cửa Hàng GreenCoin: Tools • Vật Phẩm • Skin 3D
+      </button>
+      <button class="pop-btn purple" onclick="useGreenCoinTool('tool_instant_charge')" id="next-month-pop-btn">⚡ Sạc Đầy Ngay (10 GC)</button>
+      <div id="tools-pop-desc" style="font-size:8px; color:#57534e; line-height:1.28; display:none;"></div>
+    </div>
+
+    <!-- BOTTOM FLOATING CONTEXT PILL + COLLAPSIBLE SHEET + 5-TAB DOCK -->
+    <div class="bottom-ui-wrapper">
+      <div class="selected-lot-floating-bar">
+        <div class="sel-bar-left" onclick="zoomToLot(state.selectedLotId); toggleSheetState('normal');">
+          <div class="sel-bar-title" id="drawer-context-lbl">📌 Lô #1 [Q1-Kim Ngân]: Số 18 Phố Kim Ngân (90m²)</div>
+          <div class="sel-bar-sub" id="drawer-context-sub">
+            <span>🔌 2/4 Trụ</span>
+            <span>🚕Taxi: 26đ | 🚗Thường: 18đ</span>
+            <span>Trống: 34m²</span>
+          </div>
+        </div>
+        <div class="sel-bar-actions">
+          <button class="quick-pill-btn land" id="quick-land-btn" onclick="quickExpandLandSelectedLot()">📐 +Đất</button>
+          <button class="quick-pill-btn" id="quick-expand-btn" onclick="quickAddChargerSelectedLot()">🔌 +Trụ</button>
+          <button class="quick-pill-btn debt" id="pay-debt-quick-btn" style="display:none" onclick="payAllLotDebts()">💳 Trả Nợ</button>
+        </div>
+      </div>
+
+      <!-- Collapsible Slide-up Sheet -->
+      <div class="bottom-sheet" id="bottom-drawer">
+        <div class="sheet-grab-header" onclick="cycleSheetHeight()">
+          <span class="sheet-title-txt" id="sheet-active-tab-title">🔌 QUY HOẠCH M² ĐẤT & TRỤ SẠC</span>
+          <div class="sheet-grip-pill"></div>
+          <div class="sheet-ctrl-btns" onclick="event.stopPropagation()">
+            <button class="sheet-mini-btn" id="drawer-toggle-btn" onclick="toggleSheetExpand()">🔼 Mở rộng</button>
+            <button class="sheet-mini-btn" id="drawer-hide-btn" onclick="toggleSheetMinimize()" title="Thu gọn bảng xuống để ngắm toàn cảnh Bản đồ 3D">🔽 Ẩn</button>
+          </div>
+        </div>
+
+        <!-- TAB 1: QUY HOẠCH M² ĐẤT & QUẢN LÝ TRỤ SẠC -->
+        <div class="tab-content active" id="tab-lot-detail">
+          <div id="selected-lot-panel"></div>
+        </div>
+
+        <!-- TAB 2: MỞ RỘNG TIỆN ÍCH 2.5D TẠI KHU ĐẤT -->
+        <div class="tab-content" id="tab-lot-amenities">
+          <div id="selected-lot-amenities-panel"></div>
+        </div>
+
+        <!-- TAB 3: DANH SÁCH 5.400 LÔ ĐẤT ĐẠI ĐÔ THỊ HÀ NỘI (12 QUẬN × 3 PHƯỜNG × 150 LÔ) -->
+        <div class="tab-content" id="tab-all-lots">
+          <!-- Thanh Tìm Kiếm & Dịch Chuyển Tức Thì Tới Bất Kỳ Lô #1 - #5400 -->
+          <div style="display:flex; gap:5px; align-items:center; margin-bottom:6px; background:#fffbeb; border:2px solid var(--wood-border); border-radius:11px; padding:5px 7px;">
+            <span id="jump-lot-lbl" style="font-size:9px; font-weight:900; color:#78350f; white-space:nowrap;">🎯 Tới Lô #1–#5400:</span>
+            <input id="lot-jump-input" type="number" min="1" max="5400" placeholder="Nhập số Lô (1 - 5400)..." style="flex:1; min-width:80px; border:1.5px solid #92400e; border-radius:7px; padding:3px 6px; font-size:9.5px; font-weight:800; background:#fef3c7; color:#291507; user-select:text; -webkit-user-select:text;" onkeydown="if(event.key==='Enter') jumpToLotByNumberInput()" />
+            <button id="jump-lot-go-btn" class="u-btn secondary" style="min-width:68px; padding:4px 7px;" onclick="jumpToLotByNumberInput()">🚀 Bay Tới</button>
+            <button id="jump-lot-map-btn" class="u-btn warn" style="min-width:66px; padding:4px 6px;" onclick="openWorldMetroMapModal()">🗺️ 12 Quận</button>
+          </div>
+          <div class="zone-filter-bar" id="zone-filter-bar">
+            <button class="zone-chip active" data-zf="ALL" onclick="setLotZoneFilter('ALL', this)">🌐 Tất cả (5.400 Lô)</button>
+            <button class="zone-chip" data-zf="CURRENT_WARD" onclick="setLotZoneFilter('CURRENT_WARD', this)">📍 Phường Đang Xem (150)</button>
+            <button class="zone-chip" data-zf="OWNED" onclick="setLotZoneFilter('OWNED', this)">🟢 Đang sở hữu</button>
+            <button class="zone-chip" data-zf="DIST_0" onclick="setLotZoneFilter('DIST_0', this)">🐢 Q1.Hoàng Kim (450)</button>
+            <button class="zone-chip" data-zf="DIST_1" onclick="setLotZoneFilter('DIST_1', this)">🏛️ Q2.Thiên Đình (450)</button>
+            <button class="zone-chip" data-zf="DIST_2" onclick="setLotZoneFilter('DIST_2', this)">🌊 Q3.Bích Hồ (450)</button>
+            <button class="zone-chip" data-zf="DIST_3" onclick="setLotZoneFilter('DIST_3', this)">🎓 Q4.Văn Hiến (450)</button>
+            <button class="zone-chip" data-zf="DIST_4" onclick="setLotZoneFilter('DIST_4', this)">🏙️ Q5.Silicon CBD (450)</button>
+            <button class="zone-chip" data-zf="DIST_5" onclick="setLotZoneFilter('DIST_5', this)">🏟️ Q6.Olympus (450)</button>
+            <button class="zone-chip" data-zf="DIST_6" onclick="setLotZoneFilter('DIST_6', this)">🏢 Q7.Tân Cổ Điển (450)</button>
+            <button class="zone-chip" data-zf="DIST_7" onclick="setLotZoneFilter('DIST_7', this)">🌳 Q8.Đại Công Viên (450)</button>
+            <button class="zone-chip" data-zf="DIST_8" onclick="setLotZoneFilter('DIST_8', this)">🌉 Q9.Đông Giang (450)</button>
+            <button class="zone-chip" data-zf="DIST_9" onclick="setLotZoneFilter('DIST_9', this)">🚇 Q10.Metro Lụa (450)</button>
+            <button class="zone-chip" data-zf="DIST_10" onclick="setLotZoneFilter('DIST_10', this)">🚀 Q11.Bắc Ngân Hà (450)</button>
+            <button class="zone-chip" data-zf="DIST_11" onclick="setLotZoneFilter('DIST_11', this)">🌴 Q12.Vịnh Ngọc Trai (450)</button>
+            <button class="zone-chip" data-zf="CONG_VIEN" onclick="setLotZoneFilter('CONG_VIEN', this)">🌳 Ven Công Viên</button>
+            <button class="zone-chip" data-zf="CAO_OC_CBD" onclick="setLotZoneFilter('CAO_OC_CBD', this)">🏙️ Cao Ốc CBD</button>
+            <button class="zone-chip" data-zf="PHO_CO" onclick="setLotZoneFilter('PHO_CO', this)">🏮 Khu Phố Cổ</button>
+            <button class="zone-chip" data-zf="SONG_HONG" onclick="setLotZoneFilter('SONG_HONG', this)">🌊 Ven Sông Ngân Hà</button>
+          </div>
+          <div id="all-lots-list"></div>
+        </div>
+
+        <!-- TAB 4: TRUNG TÂM MULTIPLAYER, SÀN ĐẤU GIÁ SỔ ĐỎ, ĐUA GIÁ ĐIỆN & 8 ĐỐI THỦ -->
+        <div class="tab-content" id="tab-rivals">
+          <div id="rivals-list"></div>
+        </div>
+
+        <!-- TAB 5: THUẾ ĐẤT, THUẾ TNDN, THUẾ KINH DOANH DỊCH VỤ, DƯ NỢ & SỔ ĐỐI SOÁT -->
+        <div class="tab-content" id="tab-finance">
+          <div id="tax-and-debt-panel"></div>
+          <div class="fin-grid">
+            <div class="fin-box">
+              <div class="lbl" id="fin-lbl-yr-rev">Doanh thu năm (Tính TNDN)</div>
+              <div class="val" id="fin-yr-rev" style="color:#0369a1">0đ</div>
+            </div>
+            <div class="fin-box">
+              <div class="lbl" id="fin-lbl-profit">Lợi nhuận Sạc + Tiện ích</div>
+              <div class="val" id="fin-charge-rev" style="color:#047857">0đ</div>
+            </div>
+            <div class="fin-box">
+              <div class="lbl" id="fin-lbl-tax">Tổng Thuê & Thuế đã nộp</div>
+              <div class="val" id="fin-tax-paid" style="color:#dc2626">0đ</div>
+            </div>
+            <div class="fin-box">
+              <div class="lbl" id="fin-lbl-debt">Tổng Dư Nợ (Gốc + Lãi)</div>
+              <div class="val" id="fin-debt-total" style="color:#b45309">0đ</div>
+            </div>
+          </div>
+          <div class="toast-log" id="event-log"></div>
+        </div>
+      </div>
+
+      <!-- Sleek 5-Icon Bottom Dock (with iOS/Android Safe Area Inset) -->
+      <div class="bottom-dock-nav" style="padding-bottom: max(7px, env(safe-area-inset-bottom, 7px));">
+        <button class="dock-tab-btn active" onclick="openDockTab('tab-lot-detail', this)" id="btn-tab-lot">
+          <span class="d-ico">🔌</span>
+          <span class="d-lbl" id="dock-lbl-lot">Đất & Trụ</span>
+        </button>
+        <button class="dock-tab-btn" onclick="openDockTab('tab-lot-amenities', this)" id="btn-tab-amenities">
+          <span class="d-ico">☕</span>
+          <span class="d-lbl" id="dock-lbl-am">Tiện Ích</span>
+        </button>
+        <button class="dock-tab-btn" onclick="openDockTab('tab-all-lots', this)" id="btn-tab-all">
+          <span class="d-ico">🏘️</span>
+          <span class="d-lbl" id="dock-lbl-all">5.400 Lô (12Q)</span>
+        </button>
+        <button class="dock-tab-btn" onclick="openDockTab('tab-rivals', this)" id="btn-tab-rivals">
+          <span class="d-ico">🌐</span>
+          <span class="d-lbl" id="dock-lbl-mp">MP & Đấu Giá</span>
+        </button>
+        <button class="dock-tab-btn" onclick="openDockTab('tab-finance', this)" id="btn-tab-fin">
+          <span class="d-ico">🧾</span>
+          <span class="d-lbl" id="dock-lbl-fin">Thuế & Sổ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 1: BÁO CÁO ĐỒNG BỘ SERVER / QUYẾT TOÁN THUẾ & TIỀN THUÊ ĐỊNH KỲ -->
+    <div class="modal-backdrop" id="offline-modal">
+      <div class="cartoon-modal">
+        <div class="modal-header">
+          <span id="report-modal-title">📡 BÁO CÁO VẬN HÀNH & QUYẾT TOÁN</span>
+          <button class="modal-close-btn" id="offline-close-btn" onclick="closeOfflineModal()">Đóng</button>
+        </div>
+        <div class="modal-body" id="offline-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: HỘP CÔNG CỤ QUẢN LÝ SAVE / SERVER SYNC / RESET GAME -->
+    <div class="modal-backdrop" id="save-modal">
+      <div class="cartoon-modal">
+        <div class="modal-header">
+          <span id="save-modal-hdr-title">💾 ĐỒNG BỘ SERVER & LƯU TRỮ (5.400 LÔ)</span>
+          <button class="modal-close-btn" onclick="closeSaveModal()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-weight:900; color:#047857; margin-bottom:6px;" id="last-save-time-lbl">
+            🟢 Trạng thái: Đang tự động lưu vào bộ nhớ máy.
+          </div>
+          <p id="save-modal-desc" style="margin-bottom:8px; font-weight:600; color:#57534e;">
+            • <b>Đồ hoạ Isometric 2.5D City-Builder:</b> Bấm nút <b>💎</b> trên thanh HUD để chuyển đổi linh hoạt giữa góc nhìn nghiêng Isometric 2.5D và góc nhìn Phẳng.<br/>
+            • <b>Tự động phạt & rời trạm:</b> Xe chiếm chỗ tự động nhảy phạt tới mốc ngẫu nhiên rồi trả tiền & lái ra qua cổng OUT.
+          </p>
+
+          <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+            <button id="save-now-btn" class="u-btn secondary" style="width:100%" onclick="saveGameToStorage(true)">
+              💾 Lưu Ngay Lập Tức
+            </button>
+          </div>
+
+          <div id="save-json-hdr-lbl" style="font-weight:900; margin-top:4px;">📤 Mã Save JSON (Chuyển thiết bị / Sao lưu):</div>
+          <textarea class="save-textarea" id="save-json-box" placeholder="Mã JSON tiến độ chơi..."></textarea>
+          <div style="display:flex; gap:6px; margin-bottom:10px;">
+            <button id="export-save-btn" class="u-btn" style="flex:1" onclick="exportSaveString()">📋 Copy Mã Save</button>
+            <button id="import-save-btn" class="u-btn warn" style="flex:1" onclick="importSaveString()">📥 Nạp Mã Save</button>
+          </div>
+
+          <div style="border-top:1.5px dashed #b45309; padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span id="reset-prompt-lbl" style="font-weight:800; color:#dc2626; font-size:9.8px;">Muốn chơi lại từ đầu (65 triệu VNĐ)?</span>
+            <button id="reset-game-btn" class="u-btn danger" onclick="resetAllSaveData()">🔄 Reset Game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: BẢN ĐỒ VÙNG THỦ ĐÔ 12 QUẬN × 3 PHƯỜNG = 5.400 LÔ ĐẤT (ZONE STREAMING CHO 1.000 USER) -->
+    <div class="modal-backdrop" id="metro-map-modal">
+      <div class="cartoon-modal">
+        <div class="modal-header" style="background:linear-gradient(180deg, #047857 0%, #064e3b 100%);">
+          <span id="metro-modal-hdr-title">🗺️ BẢN ĐỒ 12 QUẬN HÀ NỘI (5.400 LÔ • 1.000 USER)</span>
+          <button class="modal-close-btn" onclick="closeWorldMetroMapModal()">✕</button>
+        </div>
+        <div class="modal-body" id="metro-map-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: CỬA HÀNG GREENCOIN (GC) & QUÀ QUẢNG CÁO (ADS) -->
+    <div class="modal-backdrop" id="greencoin-shop-modal">
+      <div class="cartoon-modal">
+        <div class="modal-header" style="background:linear-gradient(180deg, #d97706 0%, #92400e 100%);">
+          <span id="gc-shop-modal-hdr-title">🪙 CỬA HÀNG GREENCOIN & QUÀ VIDEO ADS</span>
+          <button class="modal-close-btn" onclick="closeGreenCoinShopModal()">✕</button>
+        </div>
+        <div class="modal-body" id="greencoin-shop-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- MODAL 5: TRÌNH PHÁT VIDEO QUẢNG CÁO NHẬN THƯỞNG (REWARDED VIDEO AD PLAYER 5S) -->
+    <div class="modal-backdrop" id="rewarded-ad-video-modal" style="z-index: 65;">
+      <div class="cartoon-modal" style="max-width: 390px;">
+        <div class="modal-header" style="background:linear-gradient(180deg, #0284c7 0%, #0369a1 100%);">
+          <span id="rewarded-ad-modal-hdr">🎬 XEM VIDEO TÀI TRỢ NHẬN THƯỞNG</span>
+          <button class="modal-close-btn" onclick="closeRewardedVideoAdModal()">✕</button>
+        </div>
+        <div class="modal-body" id="rewarded-ad-video-modal-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

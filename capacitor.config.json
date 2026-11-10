@@ -1,0 +1,36 @@
+{
+  "appId": "com.novaverde.evtycoon",
+  "appName": "NovaVerde EV Tycoon",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "launchAutoHide": true,
+      "backgroundColor": "#064e3b",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#064e3b",
+      "overlaysWebView": false
+    },
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "apple.com",
+        "google.com"
+      ]
+    },
+    "AdMob": {
+      "appIdIos": "ca-app-pub-7182007818337262~4517338155",
+      "appIdAndroid": "ca-app-pub-7182007818337262~2769142219",
+      "initializeForTesting": false
+    }
+  }
+}

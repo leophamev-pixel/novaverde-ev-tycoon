@@ -1,0 +1,23 @@
+# Dependencies & Package Managers
+node_modules/
+npm-debug.log*
+
+# Environment Secrets (Step 0.2)
+.env.local
+.env.*.local
+
+# Mobile Wrappers & Compiled Binaries (Step 0.1)
+android/
+ios/
+*.aab
+*.apk
+*.idsig
+*.jks
+*.keystore
+
+# Build Outputs & Caches
+dist/
+www/
+.firebase/
+.DS_Store
+Thumbs.db
